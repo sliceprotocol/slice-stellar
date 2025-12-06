@@ -1,3 +1,4 @@
+import { solidityPackedKeccak256 } from 'ethers';
 import { keccak_256 } from '@noble/hashes/sha3.js';
 
 /**
@@ -30,28 +31,16 @@ export function generateSalt(): bigint {
 }
 
 /**
- * Calculate commitment: hash(vote || salt)
- * Returns the commitment as a 32-byte array
+ * Calculate commitment: keccak256(vote || salt)
+ * Uses ethers.js utility to match Solidity's abi.encodePacked structure.
+ * * @param vote The vote option (0 or 1).
+ * @param salt The secret salt as a BigInt.
+ * @returns The commitment hash as a 32-byte hex string (e.g., "0x...").
  */
-export function calculateCommitment(vote: number, salt: bigint): Uint8Array {
-  const voteBytes = new Uint8Array(1);
-  voteBytes[0] = vote;
-  
-  const saltBytes = new Uint8Array(32);
-  // Convert bigint to bytes (big-endian)
-  let saltValue = salt;
-  for (let i = 31; i >= 0; i--) {
-    saltBytes[i] = Number(saltValue & BigInt(0xff));
-    saltValue = saltValue >> BigInt(8);
-  }
-  
-  // Concatenate vote and salt
-  const input = new Uint8Array(voteBytes.length + saltBytes.length);
-  input.set(voteBytes, 0);
-  input.set(saltBytes, voteBytes.length);
-  
-  // Hash using Keccak-256
-  return keccak_256(input);
+export function calculateCommitment(vote: number, salt: bigint): string {
+  // Use ethers.solidityPackedKeccak256 to allow identical hashing in Solidity
+  // equivalent to keccak256(abi.encodePacked(vote, salt))
+  return solidityPackedKeccak256(["uint8", "uint256"], [vote, salt]);
 }
 
 /**
@@ -69,14 +58,14 @@ export function calculateNullifier(
     identityBytes[i] = Number(identityValue & BigInt(0xff));
     identityValue = identityValue >> BigInt(8);
   }
-  
+
   const saltBytes = new Uint8Array(32);
   let saltValue = salt;
   for (let i = 31; i >= 0; i--) {
     saltBytes[i] = Number(saltValue & BigInt(0xff));
     saltValue = saltValue >> BigInt(8);
   }
-  
+
   const proposalBytes = new Uint8Array(8);
   // Convert proposal_id to big-endian bytes
   let proposalValue = BigInt(proposalId);
@@ -84,13 +73,13 @@ export function calculateNullifier(
     proposalBytes[i] = Number(proposalValue & BigInt(0xff));
     proposalValue = proposalValue >> BigInt(8);
   }
-  
+
   // Concatenate all inputs
   const input = new Uint8Array(identityBytes.length + saltBytes.length + proposalBytes.length);
   input.set(identityBytes, 0);
   input.set(saltBytes, identityBytes.length);
   input.set(proposalBytes, identityBytes.length + saltBytes.length);
-  
+
   // Hash using Keccak-256
   return keccak_256(input);
 }
@@ -122,4 +111,3 @@ export function hexToBytes(hex: string): Uint8Array {
 export function bytesToBuffer(bytes: Uint8Array): Buffer {
   return Buffer.from(bytes);
 }
-

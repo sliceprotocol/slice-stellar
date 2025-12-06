@@ -3,6 +3,7 @@
 import React, { ReactNode, createContext, useContext, useState } from "react";
 import { toast } from "sonner";
 import { useEmbedded } from "./EmbeddedProvider";
+import { settings } from "@/util/config";
 
 interface Provider {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
@@ -19,8 +20,11 @@ export const XOContractsProvider = ({ children }: { children: ReactNode }) => {
   const [address, setAddress] = useState<string | null>(null);
   const { isEmbedded } = useEmbedded();
 
-  const chainId = "0x89";
-  const rpcUrl = "https://polygon-rpc.com";
+  // 2. Extract configuration values dynamically
+  // We use the first supported chain defined in the config (Amoy or Mainnet)
+  const activeChain = settings.polygon.supportedChains[0];
+  const chainId = activeChain.chainId; // e.g., "0x13882" or "0x89"
+  const rpcUrl = activeChain.rpcUrls[0]; // e.g., "https://rpc-amoy..."
 
   const connect = async () => {
     try {
@@ -31,6 +35,7 @@ export const XOContractsProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Not in embedded environment");
       }
 
+      // 3. Initialize provider with dynamic config
       const provider: Provider = new XOConnectProvider({
         rpcs: { [chainId]: rpcUrl },
         defaultChainId: chainId,
@@ -43,10 +48,12 @@ export const XOContractsProvider = ({ children }: { children: ReactNode }) => {
       const addr = await signer.getAddress();
 
       setAddress(addr);
-      toast.success(`Conectado satisfactoriamente ${addr}`);
+      toast.success(
+        `Connected to ${settings.environment}: ${addr.slice(0, 6)}...`,
+      );
     } catch (err) {
       console.log("ERROR CONNECT:", err);
-      toast.error(`Error ${err}`);
+      toast.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
     }
   };
 
