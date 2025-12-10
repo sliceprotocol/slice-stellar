@@ -7,7 +7,6 @@ import { BarChartIcon } from "./icons/Icon";
 import { FilterIcon } from "./icons/BadgeIcons";
 import styles from "./DisputesList.module.css";
 import { Gavel, Eye } from "lucide-react";
-import { useSliceContract } from "@/hooks/useSliceContract";
 import { useXOContracts } from "@/providers/XOContractsProvider";
 
 export interface Dispute {
@@ -134,8 +133,6 @@ export const DisputesList: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* ACTION BUTTONS: Now target 'activeDisputeId' (YOUR latest) */}
-
           {/* Vote Button */}
           <button
             onClick={() =>
