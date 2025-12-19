@@ -11,8 +11,10 @@ import { BottomNavigation } from "@/components/layout/BottomNavigation"; // Impo
 export const metadata: Metadata = {
   title: "Slice",
   description: "Get paid for doing justice",
+  manifest: "/manifest.json",
   icons: {
     icon: "/images/slice-logo-light.svg",
+    apple: "/icons/icon.png",
   },
 };
 
