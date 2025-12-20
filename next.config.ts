@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       ...config.resolve.alias,
       "@react-native-async-storage/async-storage": false,
       "@solana/web3.js": false,
+      "@solana-program/system": false,
+      "@solana-program/token": false,
+      "@solana-program/memo": false,
+      "@solana/kit": false,
       bs58: false,
     };
 
