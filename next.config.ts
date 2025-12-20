@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
     config.resolve.alias = {
       ...config.resolve.alias,
       "@react-native-async-storage/async-storage": false,
+      "@solana/web3.js": false,
+      bs58: false,
     };
 
     config.externals.push("pino-pretty", "lokijs", "encoding");
