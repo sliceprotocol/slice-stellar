@@ -12,81 +12,87 @@ export const BaseRawDebugger = () => {
 
   const addLog = (msg: string) => setLogs((prev) => [`> ${msg}`, ...prev]);
 
-  const handleRawSend = async () => {
-    if (!address || !signer) {
-      toast.error("Wallet not connected");
+  const handleSafeRawSend = async () => {
+    if (!address || !signer || !signer.provider) {
+      toast.error("Wallet not ready");
       return;
     }
 
     setIsLoading(true);
     setLogs([]);
-    addLog("🚀 Starting Raw Base Mainnet Transaction...");
+    addLog("🚀 Starting Safe Raw Transaction...");
 
     try {
-      // 1. Get the lowest-level provider (bypass Ethers abstractions)
-      const provider = signer.provider?.provider || (window as any).ethereum;
+      // FIX: Cast provider to 'any' to access the .send() method
+      const rawProvider = signer.provider as any;
 
-      if (!provider) throw new Error("No low-level provider found");
-
-      // 2. FORCE Base Mainnet Chain ID (0x2105 = 8453)
-      // If the wallet is on the wrong chain, we attempt to switch it FIRST.
+      // 1. Force Chain Switch via Ethers 'send' (Standard RPC method)
       try {
-        const currentChain = await provider.request({ method: "eth_chainId" });
-        addLog(`Current Chain: ${currentChain}`);
+        const chainId = await rawProvider.send("eth_chainId", []);
+        addLog(`Current Chain ID: ${chainId}`);
 
-        if (currentChain !== "0x2105") {
-          // 8453 in Hex
-          addLog("⚠️ Wrong chain! Requesting switch to Base Mainnet...");
-          await provider.request({
-            method: "wallet_switchEthereumChain",
-            params: [{ chainId: "0x2105" }],
-          });
-          addLog("✅ Switched to Base Mainnet");
+        if (chainId !== "0x2105") {
+          // 8453 (Base Mainnet)
+          addLog("⚠️ Switching to Base Mainnet (0x2105)...");
+          await rawProvider.send("wallet_switchEthereumChain", [
+            { chainId: "0x2105" },
+          ]);
+          addLog("✅ Switch request sent");
         }
-      } catch (switchError) {
-        addLog(`⚠️ Chain Switch Warning: ${switchError}`);
+      } catch (switchErr: any) {
+        addLog(`⚠️ Chain Check Warning: ${switchErr.message || switchErr}`);
       }
 
-      // 3. Construct the Raw EIP-1559 Payload
-      // This is the specific format Base expects.
+      // 2. Construct Raw EIP-1559 Payload (Type 2)
       const rawPayload = {
         from: address,
-        to: address, // Send 0 ETH to yourself
+        to: address, // Send to self
         value: "0x0",
         data: "0x",
-        chainId: "0x2105", // Explicitly state Base Mainnet
-        type: "0x2", // ❗ CRITICAL: Force EIP-1559 (Type 2)
+        chainId: "0x2105", // Base Mainnet
+        type: "0x2", // ❗ FORCE EIP-1559
+        gas: "0x5208", // 21,000 Gas Limit
 
-        // Gas Limit: 21,000 (Standard transfer)
-        gas: "0x5208",
-
-        // Fees: Hardcoded low values for Base (approx 0.05 gwei)
-        // This ensures the wallet sees it as a Type 2 tx.
+        // Hardcoded fees (approx 0.05 - 0.1 gwei)
         maxFeePerGas: "0x5F5E100", // 0.1 Gwei
         maxPriorityFeePerGas: "0x2FAF080", // 0.05 Gwei
       };
 
-      addLog("📦 Payload constructed (Type 2 / EIP-1559):");
+      addLog("📦 Payload constructed:");
       addLog(JSON.stringify(rawPayload, null, 2));
 
-      // 4. Send directly via RPC
-      addLog("👉 calling eth_sendTransaction...");
-      const hash = await provider.request({
-        method: "eth_sendTransaction",
-        params: [rawPayload],
-      });
+      // 3. Send using rawProvider.send
+      addLog("👉 Sending via provider.send('eth_sendTransaction')...");
 
-      addLog(`✅ SUCCESS! Tx Hash: ${hash}`);
+      const txHash = await rawProvider.send("eth_sendTransaction", [
+        rawPayload,
+      ]);
+
+      addLog(`✅ SUCCESS! Hash: ${txHash}`);
       toast.success("Raw Transaction Sent!");
     } catch (err: any) {
       console.error(err);
-      const msg = err.message || JSON.stringify(err);
+
+      const msg =
+        err.info?.error?.message ||
+        err.shortMessage ||
+        err.message ||
+        JSON.stringify(err);
+
       addLog(`❌ ERROR: ${msg}`);
 
-      if (msg.includes("User rejected")) {
+      if (msg.includes("User rejected") || msg.includes("rejected")) {
         addLog(
-          "💡 DIAGNOSIS: The wallet blocked the request. Since we forced Type 2, check if you have ETH for gas.",
+          "💡 ANALYSIS: The payload reached the wallet, but was rejected.",
         );
+        addLog(
+          "   1. Check if you have ETH for gas (even 0 ETH transfers cost gas).",
+        );
+        addLog(
+          "   2. The embedded wallet might not support manual nonce/gas fields.",
+        );
+      } else {
+        addLog("💡 ANALYSIS: The connection to the RPC provider failed.");
       }
     } finally {
       setIsLoading(false);
@@ -94,38 +100,45 @@ export const BaseRawDebugger = () => {
   };
 
   return (
-    <div className="bg-black text-green-500 p-6 rounded-xl font-mono text-xs border border-green-900 shadow-2xl">
-      <div className="flex items-center gap-2 mb-4 border-b border-green-900 pb-2">
-        <Terminal className="w-4 h-4" />
-        <h3 className="font-bold uppercase">Base Mainnet Raw Debugger</h3>
+    <div className="bg-[#0f1014] text-green-400 p-6 rounded-xl font-mono text-xs border border-gray-800 shadow-2xl">
+      <div className="flex items-center gap-2 mb-4 border-b border-gray-800 pb-2">
+        <Terminal className="w-4 h-4 text-green-500" />
+        <h3 className="font-bold uppercase text-white">Safe Base Debugger</h3>
       </div>
 
-      <div className="mb-4 text-gray-400">
-        <p>
-          Target: <span className="text-white">Base Mainnet (8453)</span>
-        </p>
-        <p>
-          Type: <span className="text-white">EIP-1559 (0x2)</span>
-        </p>
+      <div className="mb-4 text-gray-400 space-y-1">
+        <div className="flex justify-between">
+          <span>Target:</span>
+          <span className="text-white">Base Mainnet (8453)</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Method:</span>
+          <span className="text-blue-400">provider.send()</span>
+        </div>
       </div>
 
       <button
-        onClick={handleRawSend}
+        onClick={handleSafeRawSend}
         disabled={isLoading || !address}
-        className="w-full py-3 bg-green-900/30 border border-green-600 text-green-400 rounded-lg font-bold hover:bg-green-600 hover:text-black transition-all flex justify-center gap-2 uppercase mb-4"
+        className="w-full py-3 bg-green-900/20 border border-green-600/50 text-green-400 rounded-lg font-bold hover:bg-green-500 hover:text-black transition-all flex justify-center gap-2 uppercase mb-4"
       >
-        {isLoading ? "Sending..." : "Send Raw Type-2 Tx"}{" "}
-        <Play className="w-3 h-3 mt-0.5" />
+        {isLoading ? (
+          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <>
+            <Play className="w-3 h-3 mt-0.5" /> Send Type-2 Tx
+          </>
+        )}
       </button>
 
-      <div className="bg-[#0a0a0a] p-3 rounded-lg h-48 overflow-y-auto border border-gray-800">
+      <div className="bg-black p-3 rounded-lg h-48 overflow-y-auto border border-gray-800 font-mono">
         {logs.length === 0 && (
-          <span className="text-gray-700">Logs waiting...</span>
+          <span className="text-gray-700 italic">Ready to debug...</span>
         )}
         {logs.map((l, i) => (
           <div
             key={i}
-            className="mb-1 break-all border-b border-gray-800/50 pb-1"
+            className="mb-1 break-all border-b border-gray-900/50 pb-1 whitespace-pre-wrap"
           >
             {l}
           </div>
