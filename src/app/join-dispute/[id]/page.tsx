@@ -25,10 +25,9 @@ export default function JoinDisputePage() {
     disputeId.toString(),
   );
 
-  // Helper to format the stake
+  // Helper to format the stake (already formatted in DisputeUI)
   const stakeDisplay = React.useMemo(() => {
-    if (!dispute?.requiredStake) return null;
-    return formatUnits(dispute.requiredStake, 6);
+    return dispute?.stake || null;
   }, [dispute]);
 
   // 2. Hook to execute the join

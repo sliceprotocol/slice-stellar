@@ -32,10 +32,9 @@ export default function PayDisputePage() {
       }
 
       // 2. Format the required stake from units (6 decimals) to USDC (String)
-      if (dispute.requiredStake) {
-        // USDC has 6 decimals.
-        const formatted = formatUnits(dispute.requiredStake, 6);
-        setStakeAmountDisplay(formatted);
+      // Note: dispute.stake is already formatted by disputeAdapter
+      if (dispute.stake) {
+        setStakeAmountDisplay(dispute.stake);
       }
     }
   }, [dispute, disputeId, router]);
