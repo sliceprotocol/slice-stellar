@@ -24,7 +24,7 @@ const ConnectContext = createContext<ConnectContextType | null>(null);
 export const ConnectProvider = ({ children }: { children: ReactNode }) => {
   const { isEmbedded } = useEmbedded();
   const { login, logout } = usePrivy();
-  const { connect: wagmiConnect, connectors } = useWagmiConnect();
+  const { connectAsync: wagmiConnect, connectors } = useWagmiConnect();
   const { disconnect: wagmiDisconnect } = useDisconnect();
 
   // Unified State from useSmartWallet (which uses Wagmi)
@@ -34,7 +34,7 @@ export const ConnectProvider = ({ children }: { children: ReactNode }) => {
     if (isEmbedded) {
       const xo = connectors.find((c) => c.id === "xo-connect");
       if (xo) {
-        wagmiConnect({ connector: xo });
+        await wagmiConnect({ connector: xo });
       }
     } else {
       login();
