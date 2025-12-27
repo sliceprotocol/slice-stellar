@@ -1,164 +1,152 @@
-import { createConnector } from 'wagmi';
-import { Chain } from 'wagmi/chains';
-import { defaultChain } from '@/config/chains';
+import { createConnector } from "wagmi";
+import { Chain } from "wagmi/chains";
+import { defaultChain } from "@/config/chains";
 
-// Helper to convert BigInts to Hex strings recursively
-function sanitizeParams(params: any): any {
-    if (typeof params === 'bigint') {
-        return `0x${params.toString(16)}`;
-    }
-    if (Array.isArray(params)) {
-        return params.map(sanitizeParams);
-    }
-    if (typeof params === 'object' && params !== null) {
-        const newObj: any = {};
-        for (const key in params) {
-            newObj[key] = sanitizeParams(params[key]);
-        }
-        return newObj;
-    }
-    return params;
-}
-
+// Helper to convert Wagmi Chains to the Hex Map required by XO
 function getRpcMap(chains: readonly Chain[]) {
-    const rpcMap: Record<string, string> = {};
-    chains.forEach((chain) => {
-        const hexId = `0x${chain.id.toString(16)}`;
-        rpcMap[hexId] = chain.rpcUrls.default.http[0];
-    });
-    return rpcMap;
+  const rpcMap: Record<string, string> = {};
+  chains.forEach((chain) => {
+    const hexId = `0x${chain.id.toString(16)}`;
+    // Use the first available HTTP RPC
+    rpcMap[hexId] = chain.rpcUrls.default.http[0];
+  });
+  return rpcMap;
 }
 
 export function xoConnector() {
-    let providerInstance: any = null;
+  let providerInstance: any = null;
 
-    return createConnector((config) => ({
-        id: 'xo-connect',
-        name: 'XO Wallet',
-        type: 'xo-connect',
+  return createConnector((config) => ({
+    id: "xo-connect",
+    name: "XO Wallet",
+    type: "xo-connect",
 
-        async connect({ chainId: _chainId } = {}): Promise<any> {
-            try {
-                const provider = await this.getProvider();
-                await (provider as any).request({ method: 'eth_requestAccounts' });
+    async connect({ chainId: _chainId } = {}): Promise<any> {
+      try {
+        console.log("[Debug] 1. Starting XO Connect...");
+        const provider = await this.getProvider();
 
-                const currentChainId = await this.getChainId();
-                const accounts = await this.getAccounts();
+        console.log("[Debug] 2. Requesting eth_requestAccounts...");
+        const rawAccounts = await (provider as any).request({
+          method: "eth_requestAccounts",
+        });
+        console.log("[Debug] 3. Raw Accounts Response:", rawAccounts);
 
-                if (!accounts || accounts.length === 0) {
-                    const chainHex = `0x${currentChainId.toString(16)}`;
-                    throw new Error(`XO Connect: No accounts found for chain ID ${currentChainId}. (${chainHex})`);
-                }
+        const currentChainId = await this.getChainId();
+        console.log("[Debug] 4. Raw ChainID:", currentChainId);
 
-                return {
-                    accounts: accounts as readonly `0x${string}`[],
-                    chainId: currentChainId,
-                } as any;
-            } catch (error) {
-                console.error("[xoConnector] ❌ Connection error:", error);
-                throw error;
-            }
-        },
+        const accounts = await this.getAccounts();
 
-        async getProvider() {
-            if (!providerInstance) {
-                try {
-                    const mod = await import('xo-connect');
-                    const XOConnectProvider = mod.XOConnectProvider;
-                    const initialChain = defaultChain;
-                    const initialHexId = `0x${initialChain.id.toString(16)}`;
+        const hexChainId = `0x${currentChainId.toString(16)}`;
+        const supportedChains = config.chains.map((c) => c.id);
 
-                    console.log("[xoConnector] Initializing with Chain:", initialChain.name, initialHexId);
+        console.log(
+          `[Debug] 5. Chain Check: Wallet is on ${currentChainId} (${hexChainId}). App supports: ${supportedChains.join(", ")}`,
+        );
 
-                    const rawProvider = new XOConnectProvider({
-                        rpcs: getRpcMap(config.chains),
-                        defaultChainId: initialHexId,
-                    });
+        if (!supportedChains.includes(currentChainId)) {
+          console.error(
+            "🚨 CRITICAL: Wallet chain ID not supported by App Config!",
+          );
+        }
 
-                    // === PROXY WRAPPER ===
-                    providerInstance = new Proxy(rawProvider, {
-                        get(target, prop) {
-                            if (prop === 'request') {
-                                return async (args: { method: string, params?: any[] }) => {
+        if (!accounts || accounts.length === 0) {
+          const chainHex = `0x${currentChainId.toString(16)}`;
+          throw new Error(
+            `XO Connect: No accounts found for chain ID ${currentChainId} (${chainHex}). Verify your wallet supports this network.`,
+          );
+        }
 
-                                    // 1. Intercept Transaction Calls
-                                    if (args.method === 'eth_sendTransaction') {
-                                        try {
-                                            const originalTx = args.params?.[0] || {};
+        const result = {
+          accounts: accounts as readonly `0x${string}`[],
+          chainId: currentChainId,
+        };
+        console.log("[Debug] 6. Returning to Wagmi:", result);
+        return result as any;
+      } catch (error) {
+        console.error("[xoConnector] ❌ Connection error:", error);
+        throw error;
+      }
+    },
 
-                                            // A. Sanitize BigInts -> Hex Strings
-                                            const cleanTx = sanitizeParams(originalTx);
+    async getProvider() {
+      // Singleton pattern: Only create the provider once
+      if (!providerInstance) {
+        try {
+          const mod = await import("xo-connect");
+          const XOConnectProvider = mod.XOConnectProvider;
 
-                                            // B. Map 'gas' to 'gasLimit'
-                                            if (cleanTx.gas) {
-                                                cleanTx.gasLimit = cleanTx.gas;
-                                                delete cleanTx.gas;
-                                            }
+          const chains = config.chains;
+          // Default to the first chain in your config, or the requested one
+          const initialChain = defaultChain;
+          const initialHexId = `0x${initialChain.id.toString(16)}`;
 
-                                            // C. 🚨 CRITICAL FIX: Force Default Gas Limit if missing
-                                            // If the hook didn't provide gas, we inject a high limit (500,000)
-                                            // to prevent the wallet from trying to estimate it (which fails).
-                                            if (!cleanTx.gasLimit) {
-                                                console.warn("[xoConnector] ⚠️ No gas limit found. Injecting default 500k.");
-                                                cleanTx.gasLimit = "0x7A120"; // 500,000 in Hex
-                                            }
+          console.log(
+            "[xoConnector] Initializing with Chain:",
+            initialChain.name,
+            initialHexId,
+          );
 
-                                            // D. Ensure Value exists
-                                            if (!cleanTx.value) {
-                                                cleanTx.value = "0x0";
-                                            }
+          providerInstance = new XOConnectProvider({
+            rpcs: getRpcMap(chains),
+            defaultChainId: initialHexId,
+          });
+        } catch (e) {
+          console.error(
+            "[xoConnector] ❌ Failed to import/init xo-connect:",
+            e,
+          );
+          throw e;
+        }
+      }
+      return providerInstance;
+    },
 
-                                            console.log("[xoConnector] 🚀 Sending FINAL params to XO:", cleanTx);
+    async getAccounts() {
+      const provider = await this.getProvider();
+      const accounts = await (provider as any).request({
+        method: "eth_accounts",
+      });
+      return accounts as readonly `0x${string}`[];
+    },
 
-                                            // E. Send Request & Catch Errors
-                                            return await target.request({
-                                                method: args.method,
-                                                params: [cleanTx]
-                                            });
+    async getChainId() {
+      const provider = await this.getProvider();
+      const hexId = await (provider as any).request({ method: "eth_chainId" });
+      return parseInt(hexId, 16);
+    },
 
-                                        } catch (innerError) {
-                                            console.error("[xoConnector] 💥 Wallet rejected transaction:", innerError);
-                                            throw innerError;
-                                        }
-                                    }
+    async isAuthorized() {
+      try {
+        const accounts = await this.getAccounts();
+        console.log(
+          "[Debug] isAuthorized check. Accounts found:",
+          accounts.length,
+        );
+        return !!accounts.length;
+      } catch {
+        return false;
+      }
+    },
 
-                                    // Pass through other requests normally
-                                    return target.request(args);
-                                };
-                            }
-                            return (target as any)[prop];
-                        }
-                    });
+    async disconnect() {
+      // XOConnect handles disconnects internally via window events,
+      // but we can ensure local state is cleared if needed.
+    },
 
-                } catch (e) {
-                    console.error("[xoConnector] ❌ Failed to init:", e);
-                    throw e;
-                }
-            }
-            return providerInstance;
-        },
+    onAccountsChanged(accounts) {
+      config.emitter.emit("change", {
+        accounts: accounts as readonly `0x${string}`[],
+      });
+    },
 
-        async getAccounts() {
-            const provider = await this.getProvider();
-            return (provider as any).request({ method: 'eth_accounts' });
-        },
+    onChainChanged(chain) {
+      const chainId = parseInt(chain, 16);
+      config.emitter.emit("change", { chainId });
+    },
 
-        async getChainId() {
-            const provider = await this.getProvider();
-            const hexId = await (provider as any).request({ method: 'eth_chainId' });
-            return parseInt(hexId, 16);
-        },
-
-        async isAuthorized() {
-            try {
-                const accounts = await this.getAccounts();
-                return !!accounts.length;
-            } catch { return false; }
-        },
-
-        async disconnect() { },
-        onAccountsChanged(accounts) { config.emitter.emit('change', { accounts: accounts as any }); },
-        onChainChanged(chain) { config.emitter.emit('change', { chainId: parseInt(chain, 16) }); },
-        onDisconnect() { config.emitter.emit('disconnect'); },
-    }));
+    onDisconnect() {
+      config.emitter.emit("disconnect");
+    },
+  }));
 }
