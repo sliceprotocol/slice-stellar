@@ -56,8 +56,8 @@ export function useAssignDispute() {
       }
 
       // Step 2: Batched Search
-      // IDs are 0 to total-1.
-      const correctIds = Array.from({ length: totalDisputes }, (_, i) => i);
+      // IDs are 1 to total.
+      const correctIds = Array.from({ length: totalDisputes }, (_, i) => i + 1);
 
       const results = await processInBatches(correctIds, 5, async (id) => {
         try {

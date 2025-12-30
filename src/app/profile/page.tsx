@@ -2,7 +2,15 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Terminal, Bug, Trophy, Flame, Target, Wallet } from "lucide-react";
+import {
+  ArrowLeft,
+  Terminal,
+  Bug,
+  Trophy,
+  Flame,
+  Target,
+  Wallet,
+} from "lucide-react";
 import ConnectButton from "@/components/ConnectButton";
 import { useJurorStats } from "@/hooks/useJurorStats";
 import { useWithdraw } from "@/hooks/useWithdraw";
@@ -16,7 +24,8 @@ export default function ProfilePage() {
   // 2. Fetch Withdraw Data
   const { withdraw, isWithdrawing, claimableAmount, hasFunds } = useWithdraw();
 
-  const openConsole = () => window.dispatchEvent(new Event("open-debug-console"));
+  const openConsole = () =>
+    window.dispatchEvent(new Event("open-debug-console"));
 
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F9FC] pb-32">
@@ -35,29 +44,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="flex-1 px-6 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-        {/* --- WITHDRAW CARD (New) --- */}
-        {hasFunds && (
-          <div className="bg-[#1b1c23] rounded-3xl p-6 text-white shadow-lg shadow-indigo-200">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Claimable Earnings</span>
-                <div className="text-3xl font-black mt-1">{claimableAmount} USDC</div>
-              </div>
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
-                <Wallet className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <button
-              onClick={() => withdraw()}
-              disabled={isWithdrawing}
-              className="w-full py-3 bg-white text-[#1b1c23] rounded-xl font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
-            >
-              {isWithdrawing ? "Processing..." : "Withdraw to Wallet"}
-            </button>
-          </div>
-        )}
-
         {/* ... Hero Card ... */}
         <div className="relative w-full rounded-4xl p-1 bg-linear-to-b from-gray-100 to-white shadow-xl shadow-gray-200/50">
           <div className="bg-[#1b1c23] rounded-[30px] p-6 pb-8 text-white flex flex-col items-center gap-6 relative overflow-hidden">
@@ -127,6 +113,32 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* --- WITHDRAW CARD (New) --- */}
+        {hasFunds && (
+          <div className="bg-[#1b1c23] rounded-3xl p-6 text-white shadow-lg shadow-indigo-200">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  Claimable Earnings
+                </span>
+                <div className="text-3xl font-black mt-1">
+                  {claimableAmount} USDC
+                </div>
+              </div>
+              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                <Wallet className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <button
+              onClick={() => withdraw()}
+              disabled={isWithdrawing}
+              className="w-full py-3 bg-white text-[#1b1c23] rounded-xl font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              {isWithdrawing ? "Processing..." : "Withdraw to Wallet"}
+            </button>
+          </div>
+        )}
 
         {/* ... Rewards & Tools sections ... */}
         <div className="flex flex-col gap-4">

@@ -26,6 +26,7 @@ import { NativeSendCard } from "@/components/debug/NativeSendCard";
 import { BaseRawDebugger } from "@/components/debug/BaseRawDebugger";
 import { MinimalDebugger } from "@/components/debug/MinimalDebugger";
 import { SmartDebugger } from "@/components/debug/SmartDebugger";
+import { DebugToggle } from "@/components/debug/DebugToggle";
 
 export default function DebugPage() {
   const router = useRouter();
@@ -341,6 +342,9 @@ export default function DebugPage() {
           </div>
         )}
       </div>
+
+      {/* Bottom Right toggle*/}
+      <DebugToggle />
     </div>
   );
 }
