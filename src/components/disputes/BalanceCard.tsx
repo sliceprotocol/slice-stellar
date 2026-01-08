@@ -14,8 +14,7 @@ export const BalanceCard: React.FC = () => {
   const chainId = useChainId();
   const { address } = useAccount();
 
-  const { usdcToken } = getContractsForChain(chainId);
-  const { formatted, loading: isLoading, refetch } = useTokenBalance(usdcToken);
+  const { formatted, loading: isLoading, refetch } = useTokenBalance();
   const { fundWallet } = useFundWallet();
 
   const [isSendOpen, setIsSendOpen] = useState(false);

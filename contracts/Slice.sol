@@ -1,9 +1,7 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
 // TODO:
-// - Require parties to pay requiredStake + arbitrationFee.
-// - Switch from "First-Come-First-Serve" to a "Lottery System" using Chainlink VRF.
+// - Add Min and Max stake as deployment parameters
 interface IERC20 {
     function transfer(
         address recipient,
@@ -65,7 +63,7 @@ contract Slice {
     struct JurorStats {
         uint256 totalDisputes; // Matches played
         uint256 coherentVotes; // Matches won
-        uint256 totalEarnings; // Total score (in USDC units)
+        uint256 totalEarnings; // Total score
     }
 
     // --- State Variables ---
@@ -82,6 +80,7 @@ contract Slice {
     mapping(uint256 => address[]) public candidates;
     mapping(uint256 => address[]) public disputeCandidates;
     mapping(address => uint256) public balances;
+    mapping(uint256 => uint256) public totalStakePerDispute;
 
     // --- Constants ---
     // Assuming 6 decimals like USDC.
@@ -245,6 +244,8 @@ contract Slice {
         require(_amount >= MIN_STAKE, "Stake too low");
         require(_amount <= MAX_STAKE, "Stake too high");
 
+        totalStakePerDispute[_id] += _amount;
+
         // 3. Check for duplicates in the candidate pool
         // Renamed local variable to _candidates to avoid shadowing
         address[] memory _candidates = candidates[_id];
@@ -270,26 +271,52 @@ contract Slice {
 
     function selectJurors(uint256 _id) external {
         Dispute storage d = disputeStore[_id];
-        require(block.timestamp > d.payDeadline, "Too early");
-        require(disputeJurors[_id].length == 0, "Already selected");
+        uint256 totalWeight = totalStakePerDispute[_id];
+        require(totalWeight > 0, "No weight in pool");
 
-        uint256 poolSize = candidates[_id].length;
-        require(poolSize >= d.jurorsRequired, "Not enough candidates");
+        // Use a memory array to track who we have picked
+        address[] memory pickedInThisRound = new address[](d.jurorsRequired);
+        uint256 pickedCount = 0;
 
         for (uint i = 0; i < d.jurorsRequired; i++) {
-            // Use block properties to generate a pseudo-random index
-            uint256 randomIndex = uint256(
-                keccak256(
-                    abi.encodePacked(
-                        block.timestamp,
-                        block.prevrandao, // Use prevrandao for better entropy on PoS
-                        i
-                    )
-                )
-            ) % poolSize;
+            address selected;
+            uint256 attempts = 0;
 
-            address selected = candidates[_id][randomIndex];
-            disputeJurors[_id].push(selected);
+            while (selected == address(0) && attempts < 10) {
+                uint256 target = uint256(
+                    keccak256(abi.encodePacked(block.prevrandao, i, attempts))
+                ) % totalWeight;
+
+                uint256 cumulative = 0;
+
+                for (uint j = 0; j < candidates[_id].length; j++) {
+                    address candidate = candidates[_id][j];
+                    cumulative += jurorStakes[_id][candidate];
+
+                    if (cumulative > target) {
+                        // CHECK: Is this juror already picked?
+                        bool alreadyPicked = false;
+                        for (uint k = 0; k < pickedCount; k++) {
+                            if (pickedInThisRound[k] == candidate) {
+                                alreadyPicked = true;
+                                break;
+                            }
+                        }
+
+                        if (!alreadyPicked) {
+                            selected = candidate;
+                            pickedInThisRound[pickedCount] = candidate;
+                            pickedCount++;
+                        }
+                        break;
+                    }
+                }
+                attempts++;
+            }
+
+            if (selected != address(0)) {
+                disputeJurors[_id].push(selected);
+            }
         }
 
         d.status = DisputeStatus.Commit;
