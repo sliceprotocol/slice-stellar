@@ -12,6 +12,7 @@ import { PRIVY_APP_ID, PRIVY_CLIENT_ID, IS_EMBEDDED } from "@/config/app";
 import { config } from "@/config";
 import { TimerProvider } from "@/providers/TimerContext";
 import { AutoConnect } from "@/components/AutoConnect";
+import { activeChains, defaultChain } from "@/config/chains";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,8 @@ export default function ContextProvider({
       appId={PRIVY_APP_ID}
       clientId={PRIVY_CLIENT_ID}
       config={{
+        defaultChain: defaultChain,
+        supportedChains: activeChains,
         appearance: {
           theme: "light",
           accentColor: "#1b1c23",
