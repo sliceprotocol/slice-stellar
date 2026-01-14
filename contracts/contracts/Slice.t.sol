@@ -79,11 +79,13 @@ contract SliceTest is Test {
         vm.prank(claimer);
 
         Slice.DisputeConfig memory config = Slice.DisputeConfig({
+            claimer: claimer,
             defender: defender,
             category: "General",
             ipfsHash: "QmTest123",
             jurorsRequired: 3,
             paySeconds: 1 days,
+            evidenceSeconds: 1 days,
             commitSeconds: 1 days,
             revealSeconds: 1 days
         });
@@ -130,8 +132,15 @@ contract SliceTest is Test {
         test_PayDispute();
 
         // Juror joins
+        uint256 amount = 1000000;
+        // mint tokens to juror
+        token.mint(juror, amount);
+        // approve tokens to slice
         vm.prank(juror);
-        slice.joinDispute(1);
+        token.approve(address(slice), amount);
+        // join dispute
+        vm.prank(juror);
+        slice.joinDispute(1, amount);
 
         // Check tracking
         uint256[] memory myDisputes = slice.getJurorDisputes(juror);

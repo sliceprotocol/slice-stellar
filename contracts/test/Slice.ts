@@ -23,11 +23,13 @@ describe("Slice Protocol", async function () {
     const tx = slice.write.createDispute(
       [
         {
+          claimer: claimer.account.address,
           defender: defender.account.address,
           category: "Freelance",
           ipfsHash: "QmHash123",
           jurorsRequired: 3n,
           paySeconds: 86400n,
+          evidenceSeconds: 86400n,
           commitSeconds: 86400n,
           revealSeconds: 86400n,
         },
@@ -50,11 +52,13 @@ describe("Slice Protocol", async function () {
     await slice.write.createDispute(
       [
         {
+          claimer: claimer.account.address,
           defender: defender.account.address,
           category: "Test",
           ipfsHash: "QmHash",
           jurorsRequired: 1n,
           paySeconds: 1000n,
+          evidenceSeconds: 1000n,
           commitSeconds: 1000n,
           revealSeconds: 1000n,
         },
@@ -62,8 +66,8 @@ describe("Slice Protocol", async function () {
       { account: claimer.account },
     );
 
-    // 2. Setup Tokens for the Claimer
-    const requiredStake = 100000n;
+    // 2. Setup Tokens for the Claimer (contract requires 1000000 = 1 USDC)
+    const requiredStake = 1000000n;
     await token.write.mint([claimer.account.address, requiredStake]);
     await token.write.approve([slice.address, requiredStake], {
       account: claimer.account,
