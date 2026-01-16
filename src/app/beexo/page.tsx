@@ -44,6 +44,7 @@ export default function BeexoPage() {
         transport: custom(provider as any),
       });
 
+      addLog("Client is: " + client);
       setWalletClient(client);
       addLog("Viem Client ready with XO Transport.");
     } catch (err: any) {
