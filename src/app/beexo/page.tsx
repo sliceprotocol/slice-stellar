@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { XOConnectProvider } from "xo-connect";
+import { XOConnectProvider, XOConnect } from "xo-connect";
 import { createWalletClient, custom, parseEther, formatEther } from "viem";
 import { baseSepolia } from "viem/chains";
 import { Wallet, Send, Loader2, AlertTriangle, Terminal } from "lucide-react";
@@ -111,10 +111,39 @@ export default function BeexoPage() {
 
       addLog(`3. Handshake returned. Data: ${JSON.stringify(addresses)}`);
 
-      // CHECK 4: Account Validation
+      // CHECK 4: Account Validation & Raw Data Inspection
       if (!addresses || addresses.length === 0) {
         addLog("⚠️ Connected, but NO accounts returned.");
         addLog(`   -> Wallet might not support Chain ID: ${CHAIN_ID_HEX}`);
+
+        // --- RAW DATA INSPECTION ---
+        addLog("🕵️ INSPECTING RAW WALLET DATA...");
+        try {
+          // We call the lower-level getClient() directly to see what the wallet actually sent
+          const rawClient = await XOConnect.getClient();
+
+          if (!rawClient) {
+            addLog("❌ Raw client is null (unexpected).");
+          } else {
+            addLog(`Client Alias: ${rawClient.alias}`);
+            addLog("--- SUPPORTED CURRENCIES ---");
+
+            // Log every currency and its Chain ID to find the mismatch
+            if (rawClient.currencies && rawClient.currencies.length > 0) {
+              rawClient.currencies.forEach((c: any, i: number) => {
+                addLog(`[${i}] ID: ${c.id}`);
+                addLog(`    ChainID: ${c.chainId} (Type: ${typeof c.chainId})`);
+                addLog(`    Address: ${c.address}`);
+              });
+            } else {
+              addLog("❌ Wallet returned EMPTY currencies array.");
+            }
+          }
+        } catch (debugErr: any) {
+          addLog(`❌ Debug Inspection Failed: ${debugErr.message}`);
+        }
+        // --- END RAW DATA INSPECTION ---
+
         return;
       }
 
