@@ -10,7 +10,7 @@ const transports = Object.fromEntries(
 // Switch miniapps
 const connectors = [injected(), beexoConnector()];
 
-export const config = createConfig({
+export const webConfig = createConfig({
   chains: activeChains,
   transports,
   connectors,

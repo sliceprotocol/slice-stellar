@@ -3,12 +3,10 @@ import { base } from "wagmi/chains";
 import { beexoConnector } from "./beexoConnector";
 
 export const beexoConfig = createConfig({
-  chains: [base], // ONLY Base Mainnet
+  chains: [base],
   transports: {
     [base.id]: http("https://mainnet.base.org"),
   },
-  connectors: [
-    beexoConnector(), // ONLY Beexo
-  ],
+  connectors: [beexoConnector()],
   ssr: true,
 });

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useConnect, useAccount, useBalance, useSendTransaction } from "wagmi";
 import { parseEther, formatEther } from "viem";
-import { Wallet, Send, Loader2, AlertTriangle, Terminal } from "lucide-react";
+import { Wallet, Loader2, AlertTriangle, Terminal } from "lucide-react";
 import { toast } from "sonner";
 
 export default function BeexoPage() {
