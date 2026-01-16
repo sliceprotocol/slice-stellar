@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useWriteContract, usePublicClient, useAccount } from "wagmi";
-import { SLICE_ABI, SLICE_ADDRESS } from "@/config/contracts";
+import { SLICE_ABI } from "@/config/contracts";
+import { useContracts } from "@/hooks/useContracts";
 import { uploadJSONToIPFS } from "@/util/ipfs";
 import { toast } from "sonner";
 
 export function useCreateDispute() {
   const { address } = useAccount();
+  const { sliceContract } = useContracts();
   const { writeContractAsync } = useWriteContract();
   const publicClient = usePublicClient();
   const [isCreating, setIsCreating] = useState(false);
@@ -48,7 +50,7 @@ export function useCreateDispute() {
       const time = BigInt(60 * 60 * 24); // 24 hours per phase
 
       const hash = await writeContractAsync({
-        address: SLICE_ADDRESS,
+        address: sliceContract,
         abi: SLICE_ABI,
         functionName: "createDispute",
         args: [
@@ -77,7 +79,8 @@ export function useCreateDispute() {
       return true;
     } catch (error: any) {
       console.error("Create dispute failed", error);
-      const msg = error.reason || error.shortMessage || error.message || "Unknown error";
+      const msg =
+        error.reason || error.shortMessage || error.message || "Unknown error";
       toast.error(`Create Failed: ${msg}`);
       return false;
     } finally {
