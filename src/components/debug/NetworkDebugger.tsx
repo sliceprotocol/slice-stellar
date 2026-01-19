@@ -4,13 +4,14 @@ import { useAccount } from "wagmi";
 import { defaultChain } from "@/config/chains";
 
 export const NetworkDebugger = () => {
-  const { chain, address } = useAccount();
+  // Destructure chainId directly. It is more reliable than chain object.
+  const { chainId, isConnected, address } = useAccount();
 
-  // Logic: Pure Wagmi chain detection
-  const actualChainId = chain?.id || "N/A";
-  const isMatch = actualChainId === defaultChain.id;
+  // Logic: Compare explicit IDs
+  const targetChainId = defaultChain.id;
+  const actualChainId = chainId || "N/A";
+  const isMatch = actualChainId === targetChainId;
 
-  // Note: Visibility is handled by the parent (DebugToggle)
   if (!address) return null;
 
   return (
@@ -29,7 +30,8 @@ export const NetworkDebugger = () => {
         <div className="flex justify-between items-center">
           <span className="text-gray-500 uppercase tracking-tighter">Mode</span>
           <span className="bg-white/5 px-1.5 py-0.5 rounded text-gray-300">
-            WEB (WAGMI)
+            {/* Display Environment for clarity */}
+            {process.env.NEXT_PUBLIC_APP_ENV?.toUpperCase()}
           </span>
         </div>
         <div className="h-px bg-white/5 w-full" />
@@ -39,7 +41,7 @@ export const NetworkDebugger = () => {
             Target_ID
           </span>
           <span className="bg-white/5 px-1.5 py-0.5 rounded text-indigo-400">
-            {defaultChain.id}
+            {targetChainId}
           </span>
         </div>
         <div className="flex justify-between items-center">
@@ -57,10 +59,10 @@ export const NetworkDebugger = () => {
         <div className="h-px bg-white/5 w-full" />
         <div className="flex justify-between items-center">
           <span className="text-gray-500 uppercase tracking-tighter">
-            Signer_Status
+            Status
           </span>
-          {address ? (
-            <span className="text-indigo-400">AUTHORIZED</span>
+          {isConnected ? (
+            <span className="text-indigo-400">CONNECTED</span>
           ) : (
             <span className="text-red-500 animate-pulse">DISCONNECTED</span>
           )}
