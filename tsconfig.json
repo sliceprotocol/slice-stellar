@@ -26,6 +26,8 @@
       "@/*": [
         "./src/*"
       ],
+      "@evm": ["./packages/@evm/src/index.tsx"],
+      "@evm/*": ["./packages/@evm/src/*"]
     },
   },
   "include": [
@@ -40,6 +42,7 @@
     "scripts",
     "test",
     "hardhat.config.ts",
-    "contracts"
+    "contracts",
+    "packages/@evm/src/contracts/solidity"
   ],
 }
