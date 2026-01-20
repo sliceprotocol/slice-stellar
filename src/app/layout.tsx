@@ -8,9 +8,6 @@ import localFont from "next/font/local";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { ConsoleOverlay } from "@/components/debug/ConsoleOverlay";
 import { getTenantFromHost, Tenant } from "@/config/tenant";
-import { beexoConfig } from "@/adapters/beexo";
-import { webConfig } from "@/adapters/web";
-import { cookieToInitialState } from "wagmi";
 
 export const metadata: Metadata = {
   title: "Slice",
@@ -46,14 +43,8 @@ export default async function RootLayout({
   const host = headersList.get("host"); // e.g. "beexo.slicehub.xyz"
   const tenant = getTenantFromHost(host);
 
-  // Use headersList, not headersData
-  const cookies = headersList.get("cookie");
-
-  // Ensure Tenant is imported so Tenant.BEEXO works
-  const initialState = cookieToInitialState(
-    tenant === Tenant.BEEXO ? beexoConfig : webConfig,
-    cookies,
-  );
+  // Note: initialState will be handled by the plugin system client-side
+  const initialState = undefined;
 
   return (
     <html lang="en">
