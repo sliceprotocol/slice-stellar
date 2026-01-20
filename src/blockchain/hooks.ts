@@ -5,15 +5,13 @@ import type {
   BlockchainAccount,
   BlockchainBalance,
   BlockchainContracts,
-  VoteParams,
-  RevealParams,
 } from "./types";
 
 /**
  * Proxy hooks that delegate to the active blockchain plugin
  * 
  * These hooks provide a blockchain-agnostic interface for the UI layer.
- * The actual implementation is provided by the active plugin (e.g., @evm)
+ * The actual implementation is provided by the active plugin.
  */
 
 // ===========================
@@ -38,6 +36,11 @@ export function useContracts(): BlockchainContracts {
 export function useConnect() {
   const plugin = useActivePlugin();
   return plugin.hooks.useConnect();
+}
+
+export function useSliceConnect() {
+  const plugin = useActivePlugin();
+  return plugin.hooks.useSliceConnect();
 }
 
 export function useTokenBalance(): BlockchainBalance {
@@ -96,14 +99,14 @@ export function useFaucet() {
 // Voting Hooks
 // ===========================
 
-export function useVote() {
+export function useVote(disputeId?: any) {
   const plugin = useActivePlugin();
-  return plugin.hooks.useVote();
+  return plugin.hooks.useVote(disputeId);
 }
 
-export function useReveal() {
+export function useReveal(disputeId?: any) {
   const plugin = useActivePlugin();
-  return plugin.hooks.useReveal();
+  return plugin.hooks.useReveal(disputeId);
 }
 
 export function useSliceVoting() {

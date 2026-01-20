@@ -2,10 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useWriteContract, usePublicClient } from "wagmi";
 import { uploadFileToIPFS } from "@/util/ipfs";
-import { SLICE_ABI } from "@evm/config/contracts";
-import { useContracts } from "@/blockchain/hooks";
 import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOverviewHeader";
 import { toast } from "sonner";
 import { UploadCloud, Loader2, ArrowRight } from "lucide-react";
@@ -13,9 +10,6 @@ import { UploadCloud, Loader2, ArrowRight } from "lucide-react";
 export default function SubmitEvidencePage() {
   const router = useRouter();
   const { id } = useParams() as { id: string };
-  const { sliceContract } = useContracts();
-  const { writeContractAsync } = useWriteContract();
-  const publicClient = usePublicClient();
 
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,23 +19,12 @@ export default function SubmitEvidencePage() {
 
     try {
       setIsUploading(true);
-      toast.info("Uploading to IPFS...");
 
       const ipfsHash = await uploadFileToIPFS(file);
       if (!ipfsHash) throw new Error("IPFS Upload failed");
 
-      toast.info("Submitting to blockchain...");
-
-      const hash = await writeContractAsync({
-        address: sliceContract,
-        abi: SLICE_ABI,
-        functionName: "submitEvidence",
-        args: [BigInt(id), ipfsHash],
-      });
-
-      if (publicClient) {
-        await publicClient.waitForTransactionReceipt({ hash });
-      }
+      console.log(`[Mock] Submitting evidence ${ipfsHash} for dispute ${id}`);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       toast.success("Evidence submitted successfully!");
       router.back();
@@ -109,7 +92,7 @@ export default function SubmitEvidencePage() {
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (
             <>
-              Submit On-Chain <ArrowRight className="w-5 h-5" />
+              Submit On-Chain (Mock) <ArrowRight className="w-5 h-5" />
             </>
           )}
         </button>

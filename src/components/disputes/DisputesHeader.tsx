@@ -5,7 +5,7 @@ import Link from "next/link";
 export const DisputesHeader: React.FC = () => {
   return (
     <div className="flex justify-between items-center w-full pt-8.5 px-5 overflow-hidden box-border">
-      <Link href="/beexo">
+      <Link href="/disputes">
         <img
           src="/images/icons/header-top.svg"
           alt="Header"

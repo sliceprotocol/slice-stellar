@@ -2,7 +2,7 @@
  * Blockchain Abstraction Layer
  * 
  * This module provides a blockchain-agnostic interface for the Slice Protocol.
- * Specific blockchain implementations (EVM, Stellar, etc.) are loaded as plugins.
+ * Specific blockchain implementations are loaded as plugins.
  */
 
 export * from "./types";

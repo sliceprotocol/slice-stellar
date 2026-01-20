@@ -1,6 +1,6 @@
 import React from "react";
 import { CheckCircle2, Lock, Key } from "lucide-react";
-import { shortenAddress } from "@evm/util/wallet";
+import { shortenAddress } from "@/util/address";
 
 interface DisputeCandidateCardProps {
   type: "vote" | "reveal";

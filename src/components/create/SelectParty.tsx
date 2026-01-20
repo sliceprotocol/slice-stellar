@@ -12,6 +12,7 @@ import {
 import { Contact } from "@/config/app";
 import { useAddressBook } from "@/hooks/user/useAddressBook";
 import { cn } from "@/lib/utils";
+import { isStellarAddress } from "@/util/address";
 
 import {
   Popover,
@@ -54,7 +55,7 @@ export const SelectParty: React.FC<Props> = ({
 
   // Check if current search term is a valid raw address that ISN'T in contacts
   const isUnknownAddress = useMemo(() => {
-    const isAddress = searchTerm.startsWith("0x") && searchTerm.length === 42;
+    const isAddress = isStellarAddress(searchTerm);
     const isKnown = contacts.some(
       (c) => c.address.toLowerCase() === searchTerm.toLowerCase(),
     );
@@ -159,15 +160,12 @@ export const SelectParty: React.FC<Props> = ({
                   <input
                     autoFocus
                     className="bg-transparent text-sm outline-none w-full placeholder:text-gray-400"
-                    placeholder="Search alias or paste 0x..."
+                    placeholder="Search alias or paste G..."
                     value={searchTerm}
                     onChange={(e) => {
                       setSearchTerm(e.target.value);
                       // Direct address paste logic still works for selection
-                      if (
-                        e.target.value.startsWith("0x") &&
-                        e.target.value.length === 42
-                      ) {
+                      if (isStellarAddress(e.target.value)) {
                         onChange("Unknown Alias", e.target.value);
                       }
                     }}

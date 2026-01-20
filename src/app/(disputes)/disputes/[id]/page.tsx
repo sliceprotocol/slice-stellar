@@ -6,7 +6,7 @@ import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOver
 import { PaginationDots } from "@/components/dispute-overview/PaginationDots";
 import { useGetDispute } from "@/blockchain/hooks";
 import { usePageSwipe } from "@/hooks/ui/usePageSwipe";
-import { shortenAddress } from "@evm/util/wallet";
+import { shortenAddress } from "@/util/address";
 import { DISPUTE_STATUS } from "@/config/app";
 import {
   Loader2,

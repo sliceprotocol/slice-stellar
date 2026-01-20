@@ -1,5 +1,5 @@
 import { useGetDispute } from "@/blockchain/hooks";
-import { shortenAddress } from "@evm/util/wallet";
+import { isStellarAddress, shortenAddress } from "@/util/address";
 
 export type EvidenceRole = "claimant" | "defendant";
 
@@ -16,8 +16,7 @@ export function useEvidence(disputeId: string, role: EvidenceRole) {
   const partyInfo = {
     name: realName || "Loading...",
     // Use the specific profile images requested
-    // Fallback to shortenAddress if the name looks like a 0x address
-    displayName: realName?.startsWith("0x")
+    displayName: isStellarAddress(realName)
       ? shortenAddress(realName)
       : realName,
     avatar: isClaimant

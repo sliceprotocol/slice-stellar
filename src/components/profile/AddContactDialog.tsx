@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { AVAILABLE_AVATARS } from "@/config/app";
 import { useAddressBook } from "@/hooks/user/useAddressBook";
 import { cn } from "@/lib/utils";
+import { isStellarAddress } from "@/util/address";
 
 export function AddContactDialog({
   variant = "grid",
@@ -37,7 +38,7 @@ export function AddContactDialog({
     setSelectedAvatar(AVAILABLE_AVATARS[0]);
   };
 
-  const isValidAddress = address.startsWith("0x") && address.length === 42;
+  const isValidAddress = isStellarAddress(address);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -89,7 +90,7 @@ export function AddContactDialog({
 
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-400 uppercase">
-                Wallet Address
+                Stellar Address
               </label>
               <input
                 className={cn(
@@ -98,13 +99,13 @@ export function AddContactDialog({
                     ? "border-red-300 focus:border-red-400"
                     : "border-gray-100 focus:border-[#8c8fff]",
                 )}
-                placeholder="0x..."
+                placeholder="G..."
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
               {address && !isValidAddress && (
                 <p className="text-xs text-red-500 mt-1">
-                  Please enter a valid 42-character address
+                  Please enter a valid Stellar address
                 </p>
               )}
             </div>

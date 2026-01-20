@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { useAccount } from "@/blockchain/hooks";
-import { DEFAULT_CHAIN } from "@evm/config/chains"; // Import settings to get the Chain ID
 import { toast } from "sonner";
 import { X, Copy, Check } from "lucide-react";
 
@@ -20,10 +19,7 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
 
   if (!isOpen || !address) return null;
 
-  // Append the Chain ID (e.g., @8453).
-  // This tells the wallet specifically to look at Base, not Ethereum Mainnet.
-  const chainId = DEFAULT_CHAIN.chain.id;
-  const paymentUri = `ethereum:${address}@${chainId}`;
+  const paymentUri = `web+stellar:pay?destination=${address}`;
 
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUri)}&bgcolor=ffffff`;
 
@@ -64,7 +60,7 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
         {/* Address & Copy */}
         <div className="w-full space-y-2">
           <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">
-            Your Address
+            Your Stellar Address
           </label>
           <button
             onClick={copyToClipboard}
@@ -84,16 +80,14 @@ export const ReceiveModal: React.FC<ReceiveModalProps> = ({
         </div>
 
         {/* Network Warning */}
-        <div className="mt-6 p-3 bg-[#8c8fff]/10 border border-[#8c8fff]/20 rounded-xl flex gap-3 items-start">
-          <div className="p-1 bg-[#8c8fff]/20 rounded-full shrink-0">
-            <div className="w-1.5 h-1.5 bg-[#8c8fff] rounded-full" />
+          <div className="mt-6 p-3 bg-[#8c8fff]/10 border border-[#8c8fff]/20 rounded-xl flex gap-3 items-start">
+            <div className="p-1 bg-[#8c8fff]/20 rounded-full shrink-0">
+              <div className="w-1.5 h-1.5 bg-[#8c8fff] rounded-full" />
+            </div>
+            <p className="text-[11px] font-bold text-[#1b1c23] leading-tight">
+              This QR code uses SEP-0007 (Stellar) payment requests.
+            </p>
           </div>
-          <p className="text-[11px] font-bold text-[#1b1c23] leading-tight">
-            This QR code works on the{" "}
-            <strong>{DEFAULT_CHAIN.chain.name}</strong> network (Chain ID:{" "}
-            {chainId}).
-          </p>
-        </div>
       </div>
     </div>
   );

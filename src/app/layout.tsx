@@ -7,7 +7,7 @@ import { Geist } from "next/font/google";
 import localFont from "next/font/local";
 import { BottomNavigation } from "@/components/layout/BottomNavigation";
 import { ConsoleOverlay } from "@/components/debug/ConsoleOverlay";
-import { getTenantFromHost, Tenant } from "@/config/tenant";
+import { getTenantFromHost } from "@/config/tenant";
 
 export const metadata: Metadata = {
   title: "Slice",
@@ -40,7 +40,7 @@ export default async function RootLayout({
 }>) {
   // 1. Server-Side Detection
   const headersList = await headers();
-  const host = headersList.get("host"); // e.g. "beexo.slicehub.xyz"
+  const host = headersList.get("host");
   const tenant = getTenantFromHost(host);
 
   // Note: initialState will be handled by the plugin system client-side

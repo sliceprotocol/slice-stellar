@@ -5,6 +5,7 @@ import { Loader2, X, Scan, ArrowLeft } from "lucide-react";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useSendFunds } from "@/blockchain/hooks";
 import { useStakingToken } from "@/blockchain/hooks";
+import { isStellarAddress } from "@/util/address";
 import { toast } from "sonner";
 
 interface SendModalProps {
@@ -19,30 +20,37 @@ export const SendModal: React.FC<SendModalProps> = ({ isOpen, onClose }) => {
   const [isScanning, setIsScanning] = useState(false);
 
   // Use the hook, passing a callback to clear the form on success
-  const { sendFunds, isLoading } = useSendFunds(() => {
-    onClose();
-    setRecipient("");
-    setAmount("");
-  });
+  const { sendFunds, isSending } = useSendFunds();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    void sendFunds(recipient, amount);
+    if (!isStellarAddress(recipient)) {
+      toast.error("Enter a valid Stellar address");
+      return;
+    }
+    const success = await sendFunds(recipient, amount);
+    if (success) {
+      onClose();
+      setRecipient("");
+      setAmount("");
+    }
   };
 
   const handleScan = (result: string) => {
     if (result) {
-      // 1. Clean the result. Wallet QRs often come as "ethereum:0x...?value=..."
-      // We regex to find the 0x address pattern
-      const addressMatch = result.match(/0x[a-fA-F0-9]{40}/);
+      const destinationMatch = result.match(/destination=([^&]+)/i);
+      const scannedAddress = destinationMatch
+        ? decodeURIComponent(destinationMatch[1])
+        : result;
 
-      if (addressMatch) {
-        setRecipient(addressMatch[0]);
+      if (isStellarAddress(scannedAddress)) {
+        setRecipient(scannedAddress);
         setIsScanning(false);
         toast.success("Address scanned!");
-      } else {
-        toast.error("Invalid QR code format");
+        return;
       }
+
+      toast.error("Invalid SEP-0007 QR code");
     }
   };
 
@@ -83,9 +91,9 @@ export const SendModal: React.FC<SendModalProps> = ({ isOpen, onClose }) => {
                 <div className="w-48 h-48 border-2 border-[#8c8fff] bg-transparent rounded-lg opacity-80" />
               </div>
             </div>
-            <p className="text-center text-[11px] font-bold text-gray-400 mt-4">
-              Point camera at an Ethereum address QR code
-            </p>
+                <p className="text-center text-[11px] font-bold text-gray-400 mt-4">
+                  Point camera at a Stellar payment QR code
+                </p>
           </div>
         ) : (
           /* VIEW 2: SEND FORM */
@@ -107,16 +115,16 @@ export const SendModal: React.FC<SendModalProps> = ({ isOpen, onClose }) => {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                  Recipient Address
+                  Recipient Stellar Address
                 </label>
                 <div className="relative group">
                   <input
                     type="text"
-                    placeholder="0x..."
+                    placeholder="G..."
                     value={recipient}
                     onChange={(e) => setRecipient(e.target.value)}
                     className="w-full p-4 pr-12 bg-[#f5f6f9] rounded-xl text-sm font-mono outline-none focus:ring-2 focus:ring-[#8c8fff] transition-all truncate"
-                    disabled={isLoading}
+                    disabled={isSending}
                   />
                   {/* Scan Button inside Input */}
                   <button
@@ -140,16 +148,16 @@ export const SendModal: React.FC<SendModalProps> = ({ isOpen, onClose }) => {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="w-full p-4 bg-[#f5f6f9] rounded-xl text-lg font-bold outline-none focus:ring-2 focus:ring-[#8c8fff] transition-all"
-                  disabled={isLoading}
+                  disabled={isSending}
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSending}
                 className="w-full py-4 mt-2 bg-[#1b1c23] text-white rounded-xl font-bold hover:bg-[#2c2d33] disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
               >
-                {isLoading ? (
+                {isSending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Processing...

@@ -25,9 +25,9 @@ export interface BlockchainBalance {
  * Abstract contract information
  */
 export interface BlockchainContracts {
-  sliceContract: `0x${string}`;
-  usdcToken: `0x${string}`;
-  chainId: number;
+  sliceContract: string;
+  usdcToken: string;
+  chainId: number | string;
 }
 
 /**
@@ -95,6 +95,11 @@ export interface BlockchainHooks {
   useBalance: () => BlockchainBalance;
   useContracts: () => BlockchainContracts;
   useConnect: () => any;
+  useSliceConnect: () => {
+    connect: () => Promise<void> | void;
+    disconnect: () => Promise<void> | void;
+    isAuthenticated: boolean;
+  };
   
   // Action hooks
   useCreateDispute: () => {
@@ -110,16 +115,19 @@ export interface BlockchainHooks {
     isExecuting: boolean;
   };
   useAssignDispute: () => {
-    assignDispute: (disputeId: any) => Promise<boolean>;
-    isAssigning: boolean;
+    drawDispute: (amount?: any) => Promise<string | null>;
+    isLoading: boolean;
+    isReady: boolean;
   };
   useSendFunds: () => {
-    sendFunds: (to: string, amount: bigint) => Promise<boolean>;
+    sendFunds: (to: string, amount: string | number) => Promise<boolean>;
     isSending: boolean;
   };
   useWithdraw: () => {
-    withdraw: (amount: bigint) => Promise<boolean>;
+    withdraw: (amount?: string | number) => Promise<boolean>;
     isWithdrawing: boolean;
+    claimableAmount?: string;
+    hasFunds?: boolean;
   };
   useFaucet?: () => {
     requestTokens: () => Promise<boolean>;
@@ -127,14 +135,8 @@ export interface BlockchainHooks {
   };
   
   // Voting hooks
-  useVote: () => {
-    vote: (params: VoteParams) => Promise<boolean>;
-    isVoting: boolean;
-  };
-  useReveal: () => {
-    reveal: (params: RevealParams) => Promise<boolean>;
-    isRevealing: boolean;
-  };
+  useVote: (disputeId?: any) => any;
+  useReveal: (disputeId?: any) => any;
   useSliceVoting: () => any;
   useJurorStats: (address?: string) => any;
   

@@ -25,9 +25,7 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@evm": ["./packages/@evm/src/index.tsx"],
-      "@evm/*": ["./packages/@evm/src/*"]
+      ]
     },
   },
   "include": [
@@ -42,7 +40,6 @@
     "scripts",
     "test",
     "hardhat.config.ts",
-    "contracts",
-    "packages/@evm/src/contracts/solidity"
+    "contracts"
   ],
 }
