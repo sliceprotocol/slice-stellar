@@ -1,0 +1,10 @@
+# Environment files
+.env.evm
+.env.evm.local
+
+# Build output
+dist/
+node_modules/
+
+# TypeScript
+*.tsbuildinfo
