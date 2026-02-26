@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
-  // Skip middleware for API routes
+export async function proxy(request: NextRequest) {
+  // Skip proxy for API routes
   if (request.nextUrl.pathname.startsWith("/api/")) {
     return NextResponse.next();
   }

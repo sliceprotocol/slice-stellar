@@ -193,6 +193,16 @@ export const mockPlugin: BlockchainPlugin = {
         hasFunds: true,
       };
     },
+    useFaucet: () => {
+      const { execute, isLoading } = useMockAction("Faucet");
+      return {
+        requestTokens: execute,
+        isRequesting: isLoading,
+        mint: execute,
+        isPending: isLoading,
+        isReady: true,
+      };
+    },
     useVote: () => {
       const { execute, isLoading } = useMockAction("Vote");
       return {
