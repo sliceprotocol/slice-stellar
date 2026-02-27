@@ -1,6 +1,7 @@
-#![no_std]
 use crate::error::ContractError;
-use crate::types::{Categories, Config, Dispute, CATEGORIES_KEY, CONFIG_KEY, DISPUTE_COUNTER_KEY};
+use crate::types::{
+    Categories, Config, Dispute, CATEGORIES_KEY, CONFIG_KEY, DISPUTE_COUNTER_KEY, DRAFT_QUEUE_KEY,
+};
 use soroban_sdk::{BytesN, Env, Symbol, Vec};
 
 pub fn set_config(env: &Env, config: &Config) {
@@ -66,4 +67,40 @@ pub fn get_dispute(env: &Env, id: u64) -> Result<Dispute, ContractError> {
         .instance()
         .get(&get_dispute_key(env, id))
         .ok_or(ContractError::ErrNotFound)
+}
+
+pub fn set_draft_queue(env: &Env, queue: &Vec<u64>) {
+    env.storage().instance().set(DRAFT_QUEUE_KEY, queue);
+}
+
+pub fn get_draft_queue(env: &Env) -> Vec<u64> {
+    env.storage()
+        .instance()
+        .get(DRAFT_QUEUE_KEY)
+        .unwrap_or(Vec::new(env))
+}
+
+pub fn add_dispute_to_queue(env: &Env, dispute_id: u64) {
+    let mut queue = get_draft_queue(env);
+    if !queue.contains(&dispute_id) {
+        queue.push_back(dispute_id);
+        set_draft_queue(env, &queue);
+    }
+}
+
+pub fn remove_dispute_from_queue(env: &Env, dispute_id: u64) -> bool {
+    let mut queue = get_draft_queue(env);
+
+    let Some(index) = queue.iter().position(|id| id == dispute_id) else {
+        return false;
+    };
+
+    let last_index = queue.len() - 1;
+    if index as u32 != last_index {
+        let last_value = queue.get(last_index).expect("queue last index must exist");
+        queue.set(index as u32, last_value);
+    }
+    queue.pop_back();
+    set_draft_queue(env, &queue);
+    true
 }
