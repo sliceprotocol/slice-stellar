@@ -1,17 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NetworkDebugger } from "./NetworkDebugger";
 
 export const DebugToggle = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("slice_debug_mode") === "true";
+  });
 
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("slice_debug_mode") === "true";
-    setIsVisible(saved);
-  }, []);
+  if (typeof window === "undefined") return null;
 
   const toggle = () => {
     const next = !isVisible;
@@ -20,8 +18,6 @@ export const DebugToggle = () => {
     // Dispatch event for any other components listening
     window.dispatchEvent(new Event("debug-toggle"));
   };
-
-  if (!mounted) return null;
 
   return (
     <>

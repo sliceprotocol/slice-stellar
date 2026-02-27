@@ -221,6 +221,35 @@ impl Slice {
         Ok(())
     }
 
+    pub fn submit_evidence(
+        env: Env,
+        caller: Address,
+        dispute_id: u64,
+        meta_hash: BytesN<32>,
+    ) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        let mut dispute = storage::get_dispute(&env, dispute_id)?;
+
+        if caller != dispute.claimer && caller != dispute.defender {
+            return Err(ContractError::ErrUnauthorized);
+        }
+
+        if dispute.status != DisputeStatus::Created && dispute.status != DisputeStatus::Commit {
+            return Err(ContractError::ErrEvidenceClosed);
+        }
+
+        dispute.meta_hash = meta_hash.clone();
+        storage::set_dispute(&env, &dispute);
+
+        env.events().publish(
+            (Symbol::new(&env, "EvidenceSubmitted"), dispute_id),
+            (caller, meta_hash),
+        );
+
+        Ok(())
+    }
+
     pub fn assign_dispute(
         env: Env,
         caller: Address,
@@ -533,7 +562,7 @@ impl Slice {
         };
 
         if reward_each > 0 {
-            let _ = xlm_client.try_transfer(&contract_addr, &winner, &reward_each);
+            storage::add_balance(&env, &winner, reward_each);
 
             for i in 0..juror_count {
                 if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
@@ -541,7 +570,7 @@ impl Slice {
                         .assigned_jurors
                         .get(i)
                         .ok_or(ContractError::ErrInternalState)?;
-                    let _ = xlm_client.try_transfer(&contract_addr, &juror, &reward_each);
+                    storage::add_balance(&env, &juror, reward_each);
                 }
             }
         }
@@ -551,6 +580,26 @@ impl Slice {
         storage::set_dispute(&env, &dispute);
 
         Ok(winner)
+    }
+
+    pub fn withdraw(env: Env, caller: Address) -> Result<i128, ContractError> {
+        caller.require_auth();
+
+        let amount = storage::get_balance(&env, &caller);
+        if amount <= 0 {
+            return Err(ContractError::ErrNoClaimableBalance);
+        }
+
+        storage::set_balance(&env, &caller, 0);
+
+        let xlm_client = xlm::token_client(&env);
+        let contract_addr = env.current_contract_address();
+        xlm_client.transfer(&contract_addr, &caller, &amount);
+
+        env.events()
+            .publish((Symbol::new(&env, "FundsWithdrawn"), caller), amount);
+
+        Ok(amount)
     }
 
     pub fn get_winner(env: Env, dispute_id: u64) -> Option<Address> {
@@ -564,6 +613,10 @@ impl Slice {
 
     pub fn get_dispute(env: Env, dispute_id: u64) -> Result<Dispute, ContractError> {
         storage::get_dispute(&env, dispute_id)
+    }
+
+    pub fn get_balance(env: Env, user: Address) -> i128 {
+        storage::get_balance(&env, &user)
     }
 }
 
