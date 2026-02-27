@@ -20,6 +20,12 @@ pub const ULTRAHONK_CONTRACT_ADDRESS: &str =
 
 #[contracttype]
 #[derive(Clone)]
+pub enum DataKey {
+    Balance(Address),
+}
+
+#[contracttype]
+#[derive(Clone)]
 pub struct Dispute {
     pub id: u64,
 

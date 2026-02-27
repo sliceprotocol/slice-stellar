@@ -75,11 +75,10 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    // Generate a recovery/signup link which gives us a valid token hash
-    // We use 'signup' type which provides a token that can be used immediately
+    // Generate a magic link which provides a hashed token for verifyOtp.
     const { data: linkData, error: linkError } =
       await adminClient.auth.admin.generateLink({
-        type: 'signup',
+        type: "magiclink",
         email: passkey.email,
       });
 
@@ -109,7 +108,7 @@ export async function POST(request: NextRequest) {
       userId,
       email: passkey.email,
       tokenHash,
-      tokenType: 'signup',
+      tokenType: "magiclink",
     });
   } catch (error: any) {
     console.error("Error in passkey authentication:", error);

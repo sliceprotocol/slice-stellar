@@ -29,19 +29,13 @@ const setStoredConnection = (value: boolean) => {
 };
 
 const useAccount = (): BlockchainAccount => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(() => getStoredConnection());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const storedValue = window.localStorage.getItem(CONNECT_KEY);
-    if (storedValue === "true") {
-      setIsConnected(true);
-      return;
-    }
-
-    if (storedValue === "false") {
-      setIsConnected(false);
+    if (storedValue !== null) {
       return;
     }
 

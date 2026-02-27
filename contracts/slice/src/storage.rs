@@ -1,7 +1,9 @@
 #![no_std]
 use crate::error::ContractError;
-use crate::types::{Categories, Config, Dispute, CATEGORIES_KEY, CONFIG_KEY, DISPUTE_COUNTER_KEY};
-use soroban_sdk::{BytesN, Env, Symbol, Vec};
+use crate::types::{
+    Categories, Config, DataKey, Dispute, CATEGORIES_KEY, CONFIG_KEY, DISPUTE_COUNTER_KEY,
+};
+use soroban_sdk::{Address, BytesN, Env, Symbol, Vec};
 
 pub fn set_config(env: &Env, config: &Config) {
     env.storage().instance().set(CONFIG_KEY, config);
@@ -66,4 +68,25 @@ pub fn get_dispute(env: &Env, id: u64) -> Result<Dispute, ContractError> {
         .instance()
         .get(&get_dispute_key(env, id))
         .ok_or(ContractError::ErrNotFound)
+}
+
+pub fn get_balance(env: &Env, user: &Address) -> i128 {
+    env.storage()
+        .instance()
+        .get(&DataKey::Balance(user.clone()))
+        .unwrap_or(0i128)
+}
+
+pub fn set_balance(env: &Env, user: &Address, amount: i128) {
+    env.storage()
+        .instance()
+        .set(&DataKey::Balance(user.clone()), &amount);
+}
+
+pub fn add_balance(env: &Env, user: &Address, amount: i128) {
+    if amount <= 0 {
+        return;
+    }
+    let current = get_balance(env, user);
+    set_balance(env, user, current + amount);
 }

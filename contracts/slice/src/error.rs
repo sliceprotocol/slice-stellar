@@ -30,4 +30,6 @@ pub enum ContractError {
     ErrInvalidVote = 26,
     ErrInternalState = 27,
     ErrConfigMissing = 28,
+    ErrEvidenceClosed = 29,
+    ErrNoClaimableBalance = 30,
 }
