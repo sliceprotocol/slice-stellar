@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   XCircle,
   ArrowRight,
-  Tag,
   Users,
   Coins,
   Clock,
@@ -13,9 +12,6 @@ import {
   Briefcase,
   ShoppingBag,
   Scale,
-  Gavel,
-  Lock,
-  Archive,
 } from "lucide-react";
 import type { Dispute } from "@/blockchain/hooks";
 import { cn } from "@/lib/utils";
