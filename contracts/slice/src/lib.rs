@@ -1,6 +1,7 @@
 #![no_std]
 use error::ContractError;
 use sha2::{Digest, Sha256};
+use soroban_sdk::xdr::ToXdr;
 use soroban_sdk::{contract, contractimpl, token, Address, Bytes, BytesN, Env, Symbol, Vec};
 use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits};
 
@@ -55,12 +56,12 @@ impl Slice {
         };
         storage::set_categories(&env, &categories);
         storage::set_dispute_counter(&env, 0u64);
+        storage::set_draft_queue(&env, &Vec::new(&env));
     }
 
     /// Migrate config from V1 (without token) to V2 (with token).
     /// Must be called by admin after upgrading from a pre-token contract.
     pub fn migrate_config(env: Env, token: Address) -> Result<(), ContractError> {
-        // Get admin from V1 config and require auth
         let admin = storage::get_config_v1_admin(&env)?;
         admin.require_auth();
 
@@ -222,7 +223,6 @@ impl Slice {
             return Err(ContractError::ErrInvalidAmount);
         }
 
-        // Transfer tokens from caller to contract
         let config = storage::get_config(&env)?;
         let token_client = token::Client::new(&env, &config.token);
         token_client.transfer(&caller, &env.current_contract_address(), &amount);
@@ -243,6 +243,7 @@ impl Slice {
 
         if dispute.claimer_paid && dispute.defender_paid {
             dispute.status = DisputeStatus::Commit;
+            storage::add_dispute_to_queue(&env, dispute.id);
         }
 
         storage::set_dispute(&env, &dispute);
@@ -304,31 +305,59 @@ impl Slice {
             return Err(ContractError::ErrCategoryNotFound);
         }
 
-        let mut eligible = Vec::new(&env);
-        let count = storage::get_dispute_counter(&env);
-
-        for i in 1..=count {
-            if let Ok(dispute) = storage::get_dispute(&env, i) {
-                if dispute.status == DisputeStatus::Commit
-                    && dispute.category == category
-                    && (dispute.assigned_jurors.len() as u32) < dispute.jurors_required
-                {
-                    if let Some(ref allowed) = dispute.allowed_jurors {
-                        if allowed.contains(&caller) {
-                            eligible.push_back(i);
-                        }
-                    } else {
-                        eligible.push_back(i);
-                    }
-                }
-            }
-        }
-
-        if eligible.is_empty() {
+        let queue = storage::get_draft_queue(&env);
+        if queue.is_empty() {
             return Err(ContractError::ErrNoAvailableDisputes);
         }
 
-        let dispute_id = eligible.get(0).ok_or(ContractError::ErrInternalState)?;
+        let now = env.ledger().timestamp();
+        let queue_len = queue.len();
+        let start_index = draw_queue_index(&env, &caller, queue_len)?;
+        let mut selected_dispute_id: Option<u64> = None;
+        let mut stale_ids = Vec::new(&env);
+
+        for offset in 0..queue_len {
+            let idx = (start_index + offset) % queue_len;
+            let dispute_id = queue.get(idx).ok_or(ContractError::ErrInternalState)?;
+
+            let dispute = match storage::get_dispute(&env, dispute_id) {
+                Ok(dispute) => dispute,
+                Err(_) => {
+                    stale_ids.push_back(dispute_id);
+                    continue;
+                }
+            };
+
+            if should_remove_from_queue(&dispute, now) {
+                stale_ids.push_back(dispute_id);
+                continue;
+            }
+
+            if dispute.status != DisputeStatus::Commit || dispute.category != category {
+                continue;
+            }
+
+            if let Some(ref allowed) = dispute.allowed_jurors {
+                if !allowed.contains(&caller) {
+                    continue;
+                }
+            }
+
+            if dispute.assigned_jurors.contains(&caller) {
+                continue;
+            }
+
+            if selected_dispute_id.is_none() {
+                selected_dispute_id = Some(dispute_id);
+            }
+        }
+
+        for i in 0..stale_ids.len() {
+            let stale_id = stale_ids.get(i).ok_or(ContractError::ErrInternalState)?;
+            storage::remove_dispute_from_queue(&env, stale_id);
+        }
+
+        let dispute_id = selected_dispute_id.ok_or(ContractError::ErrNoAvailableDisputes)?;
         let mut dispute = storage::get_dispute(&env, dispute_id)?;
 
         if stake_amount < dispute.min_amount || stake_amount > dispute.max_amount {
@@ -343,10 +372,6 @@ impl Slice {
             if !allowed.contains(&caller) {
                 return Err(ContractError::ErrNotAllowedJuror);
             }
-        }
-
-        if dispute.assigned_jurors.contains(&caller) {
-            return Err(ContractError::ErrAlreadyJuror);
         }
 
         let total = storage::get_total_staked(&env, &caller);
@@ -365,6 +390,10 @@ impl Slice {
         dispute.commitments.push_back(None);
         dispute.revealed_votes.push_back(None);
         dispute.revealed_salts.push_back(None);
+
+        if (dispute.assigned_jurors.len() as u32) >= dispute.jurors_required {
+            storage::remove_dispute_from_queue(&env, dispute.id);
+        }
 
         storage::set_dispute(&env, &dispute);
         Ok((dispute_id, caller))
@@ -425,6 +454,7 @@ impl Slice {
         let jurors_joined = dispute.assigned_jurors.len() as u32;
         if all_committed && jurors_joined >= dispute.jurors_required {
             dispute.status = DisputeStatus::Reveal;
+            storage::remove_dispute_from_queue(&env, dispute.id);
         }
         storage::set_dispute(&env, &dispute);
         Ok(())
@@ -479,22 +509,11 @@ impl Slice {
             .ok_or(ContractError::ErrInternalState)?
             .ok_or(ContractError::ErrInvalidProof)?;
 
-        // // 1. Verify ZK proof via UltraHonk
-        // let addr = Address::from_str(&env, ULTRAHONK_CONTRACT_ADDRESS);
-        // let client = ultrahonk_contract::Client::new(&env, &addr);
-
-        // match client.try_verify_proof(&vk_json, &proof_blob) {
-        //     Ok(Ok(_)) => {}
-        //     _ => return Err(ContractError::ErrInvalidProof),
-        // }
-
-        // // 2. Verify SHA256(vote || salt) == commitment
         let computed = compute_commitment(&env, vote, &salt)?;
         if computed != stored_commit {
             return Err(ContractError::ErrInvalidProof);
         }
 
-        // 3. Store reveal
         dispute.revealed_votes.set(idx, Some(vote));
         dispute.revealed_salts.set(idx, Some(salt));
 
@@ -642,13 +661,13 @@ impl Slice {
 
         dispute.status = DisputeStatus::Finished;
         dispute.winner = Some(winner.clone());
+        storage::remove_dispute_from_queue(&env, dispute.id);
         storage::set_dispute(&env, &dispute);
 
         Ok(winner)
     }
 
     pub fn get_winner(env: Env, dispute_id: u64) -> Option<Address> {
-        // Use storage helper but don't return Result in this view function
         let d = storage::get_dispute(&env, dispute_id).ok()?;
         if d.status != DisputeStatus::Finished {
             return None;
@@ -700,6 +719,42 @@ fn compute_commitment(
     Ok(BytesN::from_array(env, &out))
 }
 
+fn draw_queue_index(env: &Env, caller: &Address, queue_len: u32) -> Result<u32, ContractError> {
+    if queue_len == 0 {
+        return Err(ContractError::ErrNoAvailableDisputes);
+    }
+
+    let mut hasher = Sha256::new();
+    hasher.update(env.ledger().sequence().to_be_bytes());
+
+    let caller_xdr = caller.clone().to_xdr(env);
+    let caller_bytes = caller_xdr.to_alloc_vec();
+    hasher.update(caller_bytes.as_slice());
+
+    let digest = hasher.finalize();
+    let mut seed_bytes = [0u8; 8];
+    seed_bytes.copy_from_slice(&digest[..8]);
+    let seed = u64::from_be_bytes(seed_bytes);
+
+    Ok((seed % queue_len as u64) as u32)
+}
+
+fn should_remove_from_queue(dispute: &Dispute, now: u64) -> bool {
+    if dispute.status == DisputeStatus::Finished {
+        return true;
+    }
+
+    if (dispute.assigned_jurors.len() as u32) >= dispute.jurors_required {
+        return true;
+    }
+
+    match dispute.status {
+        DisputeStatus::Created => now > dispute.deadline_pay_seconds,
+        DisputeStatus::Commit => now > dispute.deadline_commit_seconds,
+        DisputeStatus::Reveal | DisputeStatus::Finished => true,
+    }
+}
+
 fn maybe_start_reveal_phase(env: &Env, dispute: &mut Dispute) -> Result<(), ContractError> {
     if dispute.status != DisputeStatus::Commit {
         return Ok(());
@@ -722,6 +777,251 @@ fn maybe_start_reveal_phase(env: &Env, dispute: &mut Dispute) -> Result<(), Cont
 
     if now > dispute.deadline_commit_seconds || all_committed {
         dispute.status = DisputeStatus::Reveal;
+        storage::remove_dispute_from_queue(env, dispute.id);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    extern crate std;
+
+    use super::*;
+    use crate::test_token;
+    use soroban_sdk::testutils::{Address as _, Ledger as _};
+
+    fn setup_contract(env: &Env) -> (Address, Address, SliceClient<'_>, Symbol) {
+        let admin = Address::generate(env);
+        let category = Symbol::new(env, "tech");
+
+        env.mock_all_auths();
+        env.ledger().set_timestamp(1_000);
+        env.ledger().set_sequence_number(50);
+
+        let sac = test_token::register_token(env, &admin);
+        let token_addr = sac.address();
+
+        let contract_id = env.register(
+            Slice,
+            (
+                admin.clone(),
+                token_addr.clone(),
+                1u64,
+                10_000u64,
+                1u64,
+                10_000u64,
+                1u64,
+                10_000u64,
+            ),
+        );
+        let client = SliceClient::new(env, &contract_id);
+        client.add_category(&category);
+
+        (contract_id, token_addr, client, category)
+    }
+
+    fn mint_and_stake(
+        env: &Env,
+        token_addr: &Address,
+        juror: &Address,
+        amount: i128,
+        client: &SliceClient<'_>,
+    ) {
+        let sac_client = test_token::stellar_asset_client(env, token_addr);
+        sac_client.mint(juror, &(amount * 10));
+        client.stake(juror, &amount);
+    }
+
+    fn create_commit_dispute(
+        env: &Env,
+        token_addr: &Address,
+        client: &SliceClient<'_>,
+        category: &Symbol,
+        jurors_required: u32,
+    ) -> u64 {
+        let claimer = Address::generate(env);
+        let defender = Address::generate(env);
+        let sac_client = test_token::stellar_asset_client(env, token_addr);
+        sac_client.mint(&claimer, &200);
+        sac_client.mint(&defender, &200);
+
+        let limits = TimeLimits {
+            pay_seconds: 100,
+            commit_seconds: 200,
+            reveal_seconds: 300,
+        };
+        let allowed_jurors: Option<Vec<Address>> = None;
+
+        let dispute_id = client
+            .create_dispute(
+                &claimer,
+                &defender,
+                &BytesN::from_array(env, &[7u8; 32]),
+                &10,
+                &100,
+                category,
+                &allowed_jurors,
+                &jurors_required,
+                &limits,
+            )
+            .unwrap();
+
+        client.pay_dispute(&claimer, &dispute_id, &20).unwrap();
+        client.pay_dispute(&defender, &dispute_id, &20).unwrap();
+        dispute_id
+    }
+
+    #[test]
+    fn dispute_is_queued_only_after_commit_transition() {
+        let env = Env::default();
+        let (contract_id, token_addr, client, category) = setup_contract(&env);
+
+        let claimer = Address::generate(&env);
+        let defender = Address::generate(&env);
+        let sac_client = test_token::stellar_asset_client(&env, &token_addr);
+        sac_client.mint(&claimer, &200);
+        sac_client.mint(&defender, &200);
+
+        let limits = TimeLimits {
+            pay_seconds: 100,
+            commit_seconds: 200,
+            reveal_seconds: 300,
+        };
+        let allowed_jurors: Option<Vec<Address>> = None;
+
+        let dispute_id = client
+            .create_dispute(
+                &claimer,
+                &defender,
+                &BytesN::from_array(&env, &[1u8; 32]),
+                &10,
+                &100,
+                &category,
+                &allowed_jurors,
+                &5,
+                &limits,
+            )
+            .unwrap();
+
+        let queue_after_create = env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(!queue_after_create.contains(&dispute_id));
+
+        client.pay_dispute(&claimer, &dispute_id, &20).unwrap();
+        let queue_after_one =
+            env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(!queue_after_one.contains(&dispute_id));
+
+        client.pay_dispute(&defender, &dispute_id, &20).unwrap();
+        let queue_after_both =
+            env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(queue_after_both.contains(&dispute_id));
+    }
+
+    #[test]
+    fn random_draw_varies_by_caller_in_same_ledger() {
+        let env = Env::default();
+        let (_contract_id, token_addr, client, category) = setup_contract(&env);
+
+        let dispute_a = create_commit_dispute(&env, &token_addr, &client, &category, 5);
+        let dispute_b = create_commit_dispute(&env, &token_addr, &client, &category, 5);
+
+        let caller_a = Address::generate(&env);
+        let mut caller_b = Address::generate(&env);
+
+        let index_a = draw_queue_index(&env, &caller_a, 2).unwrap();
+        let mut index_b = draw_queue_index(&env, &caller_b, 2).unwrap();
+        let mut attempts = 0;
+        while index_a == index_b {
+            attempts += 1;
+            assert!(attempts < 20, "unable to generate distinct caller draw index");
+            caller_b = Address::generate(&env);
+            index_b = draw_queue_index(&env, &caller_b, 2).unwrap();
+        }
+
+        mint_and_stake(&env, &token_addr, &caller_a, 100, &client);
+        mint_and_stake(&env, &token_addr, &caller_b, 100, &client);
+
+        let expected_a = if index_a == 0 { dispute_a } else { dispute_b };
+        let expected_b = if index_b == 0 { dispute_a } else { dispute_b };
+
+        let assigned_a = client.assign_dispute(&caller_a, &category, &20).unwrap();
+        let assigned_b = client.assign_dispute(&caller_b, &category, &20).unwrap();
+
+        assert_eq!(assigned_a.0, expected_a);
+        assert_eq!(assigned_b.0, expected_b);
+        assert_ne!(assigned_a.0, assigned_b.0);
+    }
+
+    #[test]
+    fn full_dispute_is_removed_from_queue() {
+        let env = Env::default();
+        let (contract_id, token_addr, client, category) = setup_contract(&env);
+        let dispute_id = create_commit_dispute(&env, &token_addr, &client, &category, 5);
+
+        for _ in 0..5 {
+            let juror = Address::generate(&env);
+            mint_and_stake(&env, &token_addr, &juror, 100, &client);
+            let assigned = client.assign_dispute(&juror, &category, &20).unwrap();
+            assert_eq!(assigned.0, dispute_id);
+        }
+
+        let queue_after_fill = env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(!queue_after_fill.contains(&dispute_id));
+
+        let extra_juror = Address::generate(&env);
+        mint_and_stake(&env, &token_addr, &extra_juror, 100, &client);
+        let result = client.try_assign_dispute(&extra_juror, &category, &20);
+        assert!(
+            result.is_err() || matches!(result, Ok(Err(_))),
+            "assignment should fail when queue is empty"
+        );
+    }
+
+    #[test]
+    fn expired_dispute_is_pruned_from_queue() {
+        let env = Env::default();
+        let (contract_id, token_addr, client, category) = setup_contract(&env);
+
+        let claimer = Address::generate(&env);
+        let defender = Address::generate(&env);
+        let sac_client = test_token::stellar_asset_client(&env, &token_addr);
+        sac_client.mint(&claimer, &200);
+        sac_client.mint(&defender, &200);
+
+        let limits = TimeLimits {
+            pay_seconds: 5,
+            commit_seconds: 10,
+            reveal_seconds: 20,
+        };
+        let allowed_jurors: Option<Vec<Address>> = None;
+        let stale_dispute_id = client
+            .create_dispute(
+                &claimer,
+                &defender,
+                &BytesN::from_array(&env, &[9u8; 32]),
+                &10,
+                &100,
+                &category,
+                &allowed_jurors,
+                &5,
+                &limits,
+            )
+            .unwrap();
+
+        client.pay_dispute(&claimer, &stale_dispute_id, &20).unwrap();
+        client.pay_dispute(&defender, &stale_dispute_id, &20).unwrap();
+
+        let active_dispute_id = create_commit_dispute(&env, &token_addr, &client, &category, 5);
+
+        env.ledger().set_timestamp(2_000);
+
+        let juror = Address::generate(&env);
+        mint_and_stake(&env, &token_addr, &juror, 100, &client);
+        let assigned = client.assign_dispute(&juror, &category, &20).unwrap();
+        assert_eq!(assigned.0, active_dispute_id);
+
+        let queue = env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(!queue.contains(&stale_dispute_id));
+        assert!(queue.contains(&active_dispute_id));
+    }
 }
