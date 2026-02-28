@@ -1,7 +1,6 @@
-#![no_std]
 use crate::error::ContractError;
-use crate::types::{Categories, Config, Dispute, CATEGORIES_KEY, CONFIG_KEY, DISPUTE_COUNTER_KEY};
-use soroban_sdk::{BytesN, Env, Symbol, Vec};
+use crate::types::{Categories, Config, Dispute, UserStake, CATEGORIES_KEY, CONFIG_KEY, DISPUTE_COUNTER_KEY};
+use soroban_sdk::{Address, BytesN, Env, Symbol, Vec};
 
 pub fn set_config(env: &Env, config: &Config) {
     env.storage().instance().set(CONFIG_KEY, config);
@@ -66,4 +65,19 @@ pub fn get_dispute(env: &Env, id: u64) -> Result<Dispute, ContractError> {
         .instance()
         .get(&get_dispute_key(env, id))
         .ok_or(ContractError::ErrNotFound)
+}
+
+pub fn get_user_stake(env: &Env, user: &Address) -> UserStake {
+    let key = (Symbol::new(env, "USTK"), user);
+    env.storage()
+        .instance()
+        .get(&key)
+        .unwrap_or_default()
+}
+
+pub fn set_user_stake(env: &Env, user: &Address, stake: &UserStake) {
+    let key = (Symbol::new(env, "USTK"), user);
+    env.storage()
+        .instance()
+        .set(&key, stake);
 }

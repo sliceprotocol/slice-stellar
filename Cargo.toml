@@ -1,0 +1,9 @@
+[workspace]
+members = ["contracts/slice"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/Mac-5/slice-stellar"
+version = "0.1.0"

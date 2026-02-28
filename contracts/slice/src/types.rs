@@ -84,3 +84,10 @@ pub struct Config {
     pub min_reveal_seconds: u64,
     pub max_reveal_seconds: u64,
 }
+
+#[contracttype]
+#[derive(Clone, Default)]
+pub struct UserStake {
+    pub total_staked: i128,
+    pub stake_in_disputes: i128,
+}

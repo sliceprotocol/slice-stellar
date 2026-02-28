@@ -9,6 +9,9 @@ mod storage;
 mod types;
 mod xlm;
 
+#[cfg(test)]
+mod test;
+
 mod ultrahonk_contract {
     soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
 }
@@ -221,6 +224,47 @@ impl Slice {
         Ok(())
     }
 
+    pub fn stake(env: Env, caller: Address, amount: i128) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        if amount <= 0 {
+            return Err(ContractError::ErrInvalidAmount);
+        }
+
+        let xlm_client = xlm::token_client(&env);
+        xlm_client.transfer(&caller, &env.current_contract_address(), &amount);
+
+        let mut user_stake = storage::get_user_stake(&env, &caller);
+        user_stake.total_staked += amount;
+        storage::set_user_stake(&env, &caller, &user_stake);
+
+        Ok(())
+    }
+
+    pub fn unstake(env: Env, caller: Address, amount: i128) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        if amount <= 0 {
+            return Err(ContractError::ErrInvalidAmount);
+        }
+
+        let user_stake = storage::get_user_stake(&env, &caller);
+        let available = user_stake.total_staked - user_stake.stake_in_disputes;
+
+        if available < amount {
+            return Err(ContractError::ErrInsufficientAvailableStake);
+        }
+
+        let xlm_client = xlm::token_client(&env);
+        xlm_client.transfer(&env.current_contract_address(), &caller, &amount);
+
+        let mut updated_stake = user_stake;
+        updated_stake.total_staked -= amount;
+        storage::set_user_stake(&env, &caller, &updated_stake);
+
+        Ok(())
+    }
+
     pub fn assign_dispute(
         env: Env,
         caller: Address,
@@ -277,6 +321,16 @@ impl Slice {
         if dispute.assigned_jurors.contains(&caller) {
             return Err(ContractError::ErrAlreadyJuror);
         }
+
+        let mut user_stake = storage::get_user_stake(&env, &caller);
+        let available = user_stake.total_staked - user_stake.stake_in_disputes;
+
+        if available < stake_amount {
+            return Err(ContractError::ErrInsufficientAvailableStake);
+        }
+
+        user_stake.stake_in_disputes += stake_amount;
+        storage::set_user_stake(&env, &caller, &user_stake);
 
         dispute.assigned_jurors.push_back(caller.clone());
         dispute.juror_stakes.push_back(stake_amount);
@@ -546,6 +600,26 @@ impl Slice {
             }
         }
 
+        for i in 0..juror_count {
+            let juror = dispute
+                .assigned_jurors
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?;
+            let stake = dispute
+                .juror_stakes
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?;
+
+            let mut user_stake = storage::get_user_stake(&env, &juror);
+            user_stake.stake_in_disputes -= stake;
+
+            if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 0 {
+                user_stake.total_staked -= stake;
+            }
+
+            storage::set_user_stake(&env, &juror, &user_stake);
+        }
+
         dispute.status = DisputeStatus::Finished;
         dispute.winner = Some(winner.clone());
         storage::set_dispute(&env, &dispute);
@@ -564,6 +638,10 @@ impl Slice {
 
     pub fn get_dispute(env: Env, dispute_id: u64) -> Result<Dispute, ContractError> {
         storage::get_dispute(&env, dispute_id)
+    }
+
+    pub fn get_user_stake(env: Env, user: Address) -> types::UserStake {
+        storage::get_user_stake(&env, &user)
     }
 }
 
