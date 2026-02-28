@@ -9,6 +9,9 @@ mod storage;
 mod types;
 mod xlm;
 
+#[cfg(test)]
+mod test_staking;
+
 mod ultrahonk_contract {
     soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
 }
@@ -221,6 +224,47 @@ impl Slice {
         Ok(())
     }
 
+    pub fn stake(env: Env, caller: Address, amount: i128) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        if amount <= 0 {
+            return Err(ContractError::ErrInvalidAmount);
+        }
+
+        let xlm_client = xlm::token_client(&env);
+        let contract_addr = env.current_contract_address();
+        xlm_client.transfer(&caller, &contract_addr, &amount);
+
+        let current = storage::get_total_staked(&env, &caller);
+        storage::set_total_staked(&env, &caller, current + amount);
+
+        Ok(())
+    }
+
+    pub fn unstake(env: Env, caller: Address, amount: i128) -> Result<(), ContractError> {
+        caller.require_auth();
+
+        if amount <= 0 {
+            return Err(ContractError::ErrInvalidAmount);
+        }
+
+        let total = storage::get_total_staked(&env, &caller);
+        let locked = storage::get_stake_in_disputes(&env, &caller);
+        let available = total - locked;
+
+        if available < amount {
+            return Err(ContractError::ErrInsufficientStake);
+        }
+
+        let xlm_client = xlm::token_client(&env);
+        let contract_addr = env.current_contract_address();
+        xlm_client.transfer(&contract_addr, &caller, &amount);
+
+        storage::set_total_staked(&env, &caller, total - amount);
+
+        Ok(())
+    }
+
     pub fn assign_dispute(
         env: Env,
         caller: Address,
@@ -277,6 +321,16 @@ impl Slice {
         if dispute.assigned_jurors.contains(&caller) {
             return Err(ContractError::ErrAlreadyJuror);
         }
+
+        let total = storage::get_total_staked(&env, &caller);
+        let locked = storage::get_stake_in_disputes(&env, &caller);
+        let available = total - locked;
+
+        if available < stake_amount {
+            return Err(ContractError::ErrInsufficientStake);
+        }
+
+        storage::set_stake_in_disputes(&env, &caller, locked + stake_amount);
 
         dispute.assigned_jurors.push_back(caller.clone());
         dispute.juror_stakes.push_back(stake_amount);
@@ -534,16 +588,30 @@ impl Slice {
 
         if reward_each > 0 {
             let _ = xlm_client.try_transfer(&contract_addr, &winner, &reward_each);
+        }
 
-            for i in 0..juror_count {
-                if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
-                    let juror = dispute
-                        .assigned_jurors
-                        .get(i)
-                        .ok_or(ContractError::ErrInternalState)?;
+        for i in 0..juror_count {
+            let juror = dispute
+                .assigned_jurors
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?;
+            let stake = dispute
+                .juror_stakes
+                .get(i)
+                .ok_or(ContractError::ErrInternalState)?;
+            let locked = storage::get_stake_in_disputes(&env, &juror);
+            let total = storage::get_total_staked(&env, &juror);
+
+            if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
+                storage::set_total_staked(&env, &juror, total + reward_each);
+                if reward_each > 0 {
                     let _ = xlm_client.try_transfer(&contract_addr, &juror, &reward_each);
                 }
+            } else {
+                storage::set_total_staked(&env, &juror, total - stake);
             }
+
+            storage::set_stake_in_disputes(&env, &juror, locked - stake);
         }
 
         dispute.status = DisputeStatus::Finished;
@@ -564,6 +632,20 @@ impl Slice {
 
     pub fn get_dispute(env: Env, dispute_id: u64) -> Result<Dispute, ContractError> {
         storage::get_dispute(&env, dispute_id)
+    }
+
+    pub fn get_total_staked(env: Env, addr: Address) -> i128 {
+        storage::get_total_staked(&env, &addr)
+    }
+
+    pub fn get_stake_in_disputes(env: Env, addr: Address) -> i128 {
+        storage::get_stake_in_disputes(&env, &addr)
+    }
+
+    pub fn get_available_stake(env: Env, addr: Address) -> i128 {
+        let total = storage::get_total_staked(&env, &addr);
+        let locked = storage::get_stake_in_disputes(&env, &addr);
+        total - locked
     }
 }
 

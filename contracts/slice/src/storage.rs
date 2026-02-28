@@ -67,3 +67,49 @@ pub fn get_dispute(env: &Env, id: u64) -> Result<Dispute, ContractError> {
         .get(&get_dispute_key(env, id))
         .ok_or(ContractError::ErrNotFound)
 }
+
+fn get_user_stake_key(env: &Env, addr: &Address) -> BytesN<32> {
+    let mut arr = [0u8; 32];
+    arr[0..4].copy_from_slice(b"STAK");
+    let addr_bytes = addr.to_string();
+    let bytes = addr_bytes.as_bytes();
+    let len = bytes.len().min(28);
+    arr[4..4 + len].copy_from_slice(&bytes[..len]);
+    BytesN::from_array(env, &arr)
+}
+
+fn get_user_locked_key(env: &Env, addr: &Address) -> BytesN<32> {
+    let mut arr = [0u8; 32];
+    arr[0..4].copy_from_slice(b"LOCK");
+    let addr_bytes = addr.to_string();
+    let bytes = addr_bytes.as_bytes();
+    let len = bytes.len().min(28);
+    arr[4..4 + len].copy_from_slice(&bytes[..len]);
+    BytesN::from_array(env, &arr)
+}
+
+pub fn get_total_staked(env: &Env, addr: &Address) -> i128 {
+    env.storage()
+        .instance()
+        .get(&get_user_stake_key(env, addr))
+        .unwrap_or(0i128)
+}
+
+pub fn set_total_staked(env: &Env, addr: &Address, amount: i128) {
+    env.storage()
+        .instance()
+        .set(&get_user_stake_key(env, addr), &amount);
+}
+
+pub fn get_stake_in_disputes(env: &Env, addr: &Address) -> i128 {
+    env.storage()
+        .instance()
+        .get(&get_user_locked_key(env, addr))
+        .unwrap_or(0i128)
+}
+
+pub fn set_stake_in_disputes(env: &Env, addr: &Address, amount: i128) {
+    env.storage()
+        .instance()
+        .set(&get_user_locked_key(env, addr), &amount);
+}
