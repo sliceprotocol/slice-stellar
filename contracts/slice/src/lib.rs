@@ -238,6 +238,11 @@ impl Slice {
         user_stake.total_staked += amount;
         storage::set_user_stake(&env, &caller, &user_stake);
 
+        env.events().publish(
+            (Symbol::new(&env, "credit"), caller.clone()),
+            (amount, user_stake.total_staked)
+        );
+
         Ok(())
     }
 
@@ -261,6 +266,11 @@ impl Slice {
         let mut updated_stake = user_stake;
         updated_stake.total_staked -= amount;
         storage::set_user_stake(&env, &caller, &updated_stake);
+
+        env.events().publish(
+            (Symbol::new(&env, "debit"), caller.clone()),
+            (amount, updated_stake.total_staked)
+        );
 
         Ok(())
     }
@@ -331,6 +341,11 @@ impl Slice {
 
         user_stake.stake_in_disputes += stake_amount;
         storage::set_user_stake(&env, &caller, &user_stake);
+
+        env.events().publish(
+            (Symbol::new(&env, "stake_lock"), caller.clone()),
+            (dispute_id, stake_amount, user_stake.stake_in_disputes)
+        );
 
         dispute.assigned_jurors.push_back(caller.clone());
         dispute.juror_stakes.push_back(stake_amount);
@@ -613,8 +628,19 @@ impl Slice {
             let mut user_stake = storage::get_user_stake(&env, &juror);
             user_stake.stake_in_disputes -= stake;
 
-            if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 0 {
+            let is_correct = correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1;
+
+            if !is_correct {
                 user_stake.total_staked -= stake;
+                env.events().publish(
+                    (Symbol::new(&env, "slash"), juror.clone()),
+                    (dispute_id, stake, user_stake.total_staked)
+                );
+            } else {
+                env.events().publish(
+                    (Symbol::new(&env, "stake_rel"), juror.clone()),
+                    (dispute_id, stake, user_stake.stake_in_disputes)
+                );
             }
 
             storage::set_user_stake(&env, &juror, &user_stake);
