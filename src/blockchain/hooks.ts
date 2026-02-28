@@ -87,6 +87,16 @@ export function useWithdraw() {
   return plugin.hooks.useWithdraw();
 }
 
+export function useStake() {
+  const plugin = useActivePlugin();
+  return plugin.hooks.useStake();
+}
+
+export function useStakeInfo(address?: string) {
+  const plugin = useActivePlugin();
+  return plugin.hooks.useStakeInfo(address);
+}
+
 export function useFaucet() {
   const plugin = useActivePlugin();
   if (!plugin.hooks.useFaucet) {
