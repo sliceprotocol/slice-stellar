@@ -129,6 +129,18 @@ export interface BlockchainHooks {
     claimableAmount?: string;
     hasFunds?: boolean;
   };
+  useStake: () => {
+    stake: (amount: string | number) => Promise<boolean>;
+    unstake: (amount: string | number) => Promise<boolean>;
+    isStaking: boolean;
+    isUnstaking: boolean;
+  };
+  useStakeInfo: (address?: string) => {
+    totalStaked: bigint;
+    stakeInDisputes: bigint;
+    availableStake: bigint;
+    isLoading: boolean;
+  };
   useFaucet?: () => {
     requestTokens: () => Promise<boolean>;
     isRequesting: boolean;
