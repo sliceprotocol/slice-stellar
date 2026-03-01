@@ -12,8 +12,7 @@ import {
 import { Contact } from "@/config/app";
 import { useAddressBook } from "@/hooks/user/useAddressBook";
 import { cn } from "@/lib/utils";
-import { isStellarAddress } from "@/util/address";
-
+import { isStellarAddress, isValidStellarAddress } from "@/util/address";
 import {
   Popover,
   PopoverContent,
@@ -36,6 +35,7 @@ export const SelectParty: React.FC<Props> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [addressError, setAddressError] = useState<string | null>(null);
 
   // "Add Mode" state
   const [isAdding, setIsAdding] = useState(false);
@@ -53,9 +53,8 @@ export const SelectParty: React.FC<Props> = ({
     );
   }, [contacts, searchTerm]);
 
-  // Check if current search term is a valid raw address that ISN'T in contacts
   const isUnknownAddress = useMemo(() => {
-    const isAddress = isStellarAddress(searchTerm);
+    const isAddress = isStellarAddress(searchTerm) && isValidStellarAddress(searchTerm);
     const isKnown = contacts.some(
       (c) => c.address.toLowerCase() === searchTerm.toLowerCase(),
     );
@@ -71,8 +70,8 @@ export const SelectParty: React.FC<Props> = ({
 
   const handleSaveContact = () => {
     if (!newAlias) return;
-    addContact(newAlias, searchTerm); // Use the address currently in search bar
-    onChange(newAlias, searchTerm); // Select it immediately
+    addContact(newAlias, searchTerm);
+    onChange(newAlias, searchTerm);
     setIsAdding(false);
     setNewAlias("");
     setIsOpen(false);
@@ -88,7 +87,10 @@ export const SelectParty: React.FC<Props> = ({
         open={isOpen}
         onOpenChange={(v) => {
           setIsOpen(v);
-          if (!v) setIsAdding(false); // Reset add mode on close
+          if (!v) {
+            setIsAdding(false);
+            setAddressError(null);
+          }
         }}
       >
         <PopoverTrigger asChild>
@@ -155,29 +157,40 @@ export const SelectParty: React.FC<Props> = ({
                 </div>
               ) : (
                 // MODE: SEARCH
-                <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
-                  <Search className="w-4 h-4 text-gray-400" />
-                  <input
-                    autoFocus
-                    className="bg-transparent text-sm outline-none w-full placeholder:text-gray-400"
-                    placeholder="Search alias or paste G..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      // Direct address paste logic still works for selection
-                      if (isStellarAddress(e.target.value)) {
-                        onChange("Unknown Alias", e.target.value);
-                      }
-                    }}
-                  />
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
+                    <Search className="w-4 h-4 text-gray-400" />
+                    <input
+                      autoFocus
+                      className="bg-transparent text-sm outline-none w-full placeholder:text-gray-400"
+                      placeholder="Search alias or paste G..."
+                      value={searchTerm}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSearchTerm(val);
+                        setAddressError(null);
+
+                        if (isStellarAddress(val)) {
+                          if (isValidStellarAddress(val)) {
+                            onChange("Unknown Alias", val); // valid → propagate up
+                          } else {
+                            setAddressError("Invalid Stellar address."); // ← CHANGE 6: set error
+                          }
+                        }
+                      }}
+                    />
+                  </div>
+                  {/* CHANGE 7: inline error message, only shown when addressError is set */}
+                  {addressError && (
+                    <p className="text-xs text-red-500 mt-1 px-1">{addressError}</p>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Content List */}
             <div className="max-h-[300px] overflow-y-auto p-1 bg-white">
-              {/* If user p
-asted a raw address, offer to save it */}
+              {/* If user pasted a raw address, offer to save it */}
               {isUnknownAddress && !isAdding && (
                 <button
                   onClick={() => setIsAdding(true)}
@@ -229,7 +242,7 @@ asted a raw address, offer to save it */}
                     )}
                   </button>
 
-                  {/* Delete Button (Only appears on hover for non-system contacts) */}
+                  {/* Delete Button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
