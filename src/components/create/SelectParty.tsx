@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react"; // ← added useEffect, useRef
 import Image from "next/image";
 import {
   Search,
@@ -13,6 +13,7 @@ import { Contact } from "@/config/app";
 import { useAddressBook } from "@/hooks/user/useAddressBook";
 import { cn } from "@/lib/utils";
 import { isStellarAddress, isValidStellarAddress } from "@/util/address";
+
 import {
   Popover,
   PopoverContent,
@@ -41,10 +42,37 @@ export const SelectParty: React.FC<Props> = ({
   const [isAdding, setIsAdding] = useState(false);
   const [newAlias, setNewAlias] = useState("");
 
-  // Use the hook
   const { contacts, addContact, removeContact } = useAddressBook();
 
-  // Filter logic
+
+  // We store a ref to the timer so we can cancel it on each keystroke or unmount.
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Cancel any pending timer when searchTerm changes
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    // Only schedule validation if the value looks like it could be a Stellar address
+    if (!isStellarAddress(searchTerm)) {
+      setAddressError(null);
+      return;
+    }
+
+    debounceTimer.current = setTimeout(() => {
+      if (isValidStellarAddress(searchTerm)) {
+        setAddressError(null);
+        onChange("Unknown Alias", searchTerm);
+      } else {
+        setAddressError("Invalid Stellar address.");
+        onChange("", "");
+      }
+    }, 300);
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [searchTerm]);
+
   const filteredContacts = useMemo(() => {
     return contacts.filter(
       (c) =>
@@ -66,6 +94,7 @@ export const SelectParty: React.FC<Props> = ({
     setIsOpen(false);
     setSearchTerm("");
     setIsAdding(false);
+    setAddressError(null);
   };
 
   const handleSaveContact = () => {
@@ -137,7 +166,6 @@ export const SelectParty: React.FC<Props> = ({
             {/* Search Header */}
             <div className="p-3 border-b border-gray-50 bg-white sticky top-0 z-10">
               {isAdding ? (
-                // MODE: SAVE NEW CONTACT
                 <div className="flex items-center gap-2 animate-in slide-in-from-right-2">
                   <input
                     autoFocus
@@ -156,7 +184,6 @@ export const SelectParty: React.FC<Props> = ({
                   </Button>
                 </div>
               ) : (
-                // MODE: SEARCH
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5">
                     <Search className="w-4 h-4 text-gray-400" />
@@ -166,21 +193,12 @@ export const SelectParty: React.FC<Props> = ({
                       placeholder="Search alias or paste G..."
                       value={searchTerm}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        setSearchTerm(val);
+                        // Only update raw input here 
+                        setSearchTerm(e.target.value);
                         setAddressError(null);
-
-                        if (isStellarAddress(val)) {
-                          if (isValidStellarAddress(val)) {
-                            onChange("Unknown Alias", val); // valid → propagate up
-                          } else {
-                            setAddressError("Invalid Stellar address."); // ← CHANGE 6: set error
-                          }
-                        }
                       }}
                     />
                   </div>
-                  {/* CHANGE 7: inline error message, only shown when addressError is set */}
                   {addressError && (
                     <p className="text-xs text-red-500 mt-1 px-1">{addressError}</p>
                   )}
@@ -190,7 +208,6 @@ export const SelectParty: React.FC<Props> = ({
 
             {/* Content List */}
             <div className="max-h-[300px] overflow-y-auto p-1 bg-white">
-              {/* If user pasted a raw address, offer to save it */}
               {isUnknownAddress && !isAdding && (
                 <button
                   onClick={() => setIsAdding(true)}
@@ -242,7 +259,6 @@ export const SelectParty: React.FC<Props> = ({
                     )}
                   </button>
 
-                  {/* Delete Button */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
