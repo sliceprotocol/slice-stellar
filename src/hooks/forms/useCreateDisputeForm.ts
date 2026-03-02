@@ -17,7 +17,7 @@ export const useCreateDisputeForm = () => {
     const [formData, setFormData] = useState<CreateDisputeForm>({
         title: "",
         category: "General",
-        jurorsRequired: 3,
+        jurorsRequired: 5,
         deadlineHours: 96,
         claimerName: "",
         claimerAddress: "",
@@ -47,6 +47,10 @@ export const useCreateDisputeForm = () => {
     const submit = async () => {
         if (formData.jurorsRequired % 2 === 0) {
             toast.error("Please select an odd number of jurors.");
+            return;
+        }
+        if (formData.jurorsRequired < 5) {
+            toast.error("A minimum of 5 jurors is required.");
             return;
         }
 

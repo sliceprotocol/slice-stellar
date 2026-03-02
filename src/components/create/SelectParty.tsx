@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from "react"; // ← added useEffect, useRef
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Search,
@@ -54,7 +54,7 @@ export const SelectParty: React.FC<Props> = ({
 
     // Only schedule validation if the value looks like it could be a Stellar address
     if (!isStellarAddress(searchTerm)) {
-      setAddressError(null);
+      setAddressError((prev) => (prev !== null ? null : prev));
       return;
     }
 
@@ -71,7 +71,7 @@ export const SelectParty: React.FC<Props> = ({
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [searchTerm]);
+  }, [searchTerm, onChange]);
 
   const filteredContacts = useMemo(() => {
     return contacts.filter(
