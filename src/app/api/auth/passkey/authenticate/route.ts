@@ -81,6 +81,7 @@ export async function POST(request: NextRequest) {
       await adminClient.auth.admin.generateLink({
         type: 'signup',
         email: passkey.email,
+        password: crypto.randomUUID(), // Generate a random password (won't be used with passkeys)
       });
 
     if (linkError || !linkData) {

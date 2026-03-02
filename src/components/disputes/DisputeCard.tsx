@@ -17,7 +17,7 @@ import {
   Lock,
   Archive,
 } from "lucide-react";
-import type { Dispute } from "@/blockchain/hooks";
+import type { DisputeUI } from "@/util/disputeAdapter";
 import { cn } from "@/lib/utils";
 
 // Helper to get Lucide icon component based on category string
@@ -41,7 +41,8 @@ const CategoryIcon = ({
   return <Scale className={className} />;
 };
 
-type DisputeUI = Dispute & {
+// Extended DisputeUI type with additional UI fields
+type DisputeCardProps = DisputeUI & {
   votesCount?: number;
   totalVotes?: number;
   prize?: string;
@@ -51,7 +52,7 @@ type DisputeUI = Dispute & {
 
 const VOTE_APPROVE = 1;
 
-export const DisputeCard = ({ dispute }: { dispute: DisputeUI }) => {
+export const DisputeCard = ({ dispute }: { dispute: DisputeCardProps }) => {
   const router = useRouter();
 
   const handleReadDispute = (e: React.MouseEvent) => {
