@@ -35,7 +35,7 @@ export default function PayDisputePage() {
 
   const handleSwipeComplete = async () => {
     if (!dispute) return;
-    const success = await payDispute(disputeId, stakeAmountDisplay);
+    const success = await payDispute(disputeId);
 
     if (success) {
       refetch(); // Refresh local state

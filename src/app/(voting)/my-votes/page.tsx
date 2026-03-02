@@ -26,7 +26,7 @@ export default function MyVotesPage() {
   const { disputes, isLoading } = useMyDisputes();
 
   const tasks = disputes.filter(
-    (d) =>
+    (d: any) =>
       d.phase === "VOTE" ||
       d.phase === "REVEAL" ||
       (d.phase === "WITHDRAW" && d.status === 2),
@@ -107,7 +107,7 @@ export default function MyVotesPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-5 pb-10">
-            {tasks.map((task, index) => (
+            {tasks.map((task: any, index: number) => (
               <div
                 key={task.id}
                 onClick={() => handleAction(task)}

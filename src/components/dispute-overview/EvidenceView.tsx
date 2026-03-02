@@ -237,7 +237,7 @@ export const EvidenceView: React.FC<EvidenceViewProps> = ({
               )}
 
               {/* 2. IMAGE EVIDENCE (Full Width) */}
-              {imageEvidence.map((img) => (
+              {imageEvidence.map((img: any) => (
                 <MorphingDialog
                   key={img.id}
                   transition={{
