@@ -17,8 +17,11 @@ const withPWA = withPWAInit({
 const nextConfig: NextConfig = {
   transpilePackages: ["xo-connect"],
 
+  // Silence Turbopack warning - we use webpack due to PWA plugin requirement
+  turbopack: {},
+
   // Note: The PWA plugin (@ducanh2912/next-pwa) injects webpack configuration
-  // This causes conflicts with Turbopack. We use --webpack flag in dev script
+  // This causes conflicts with Turbopack. We use --webpack flag in build script
   // to explicitly use webpack, or --turbopack if you want to use Turbopack
   // (but Turbopack may have issues with the PWA plugin)
 
