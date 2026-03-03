@@ -53,6 +53,21 @@ impl Slice {
         storage::set_dispute_counter(&env, 0u64);
     }
 
+    /// Migrate config from V1 (without token) to V2 (with token).
+    /// Must be called by admin after upgrading from a pre-token contract.
+    pub fn migrate_config(env: Env, token: Address) -> Result<(), ContractError> {
+        // Get admin from V1 config and require auth
+        let admin = storage::get_config_v1_admin(&env)?;
+        admin.require_auth();
+
+        storage::migrate_config(&env, token)
+    }
+
+    /// Get the current config version (1 = legacy, 2 = current with token).
+    pub fn get_config_version(env: Env) -> u32 {
+        storage::get_config_version(&env)
+    }
+
     pub fn add_category(env: Env, name: Symbol) -> Result<(), ContractError> {
         require_admin(&env)?;
 

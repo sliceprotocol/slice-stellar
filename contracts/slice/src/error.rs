@@ -30,4 +30,6 @@ pub enum ContractError {
     ErrInvalidVote = 26,
     ErrInternalState = 27,
     ErrConfigMissing = 28,
+    ErrConfigMigrationRequired = 29,
+    ErrAlreadyMigrated = 30,
 }
