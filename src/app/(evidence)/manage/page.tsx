@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/blockchain/hooks";
 import { useMyDisputes } from "@/blockchain/hooks";
@@ -25,7 +25,7 @@ export default function DisputeManagerPage() {
   const myCases = useMemo(() => {
     if (!address) return [];
     return disputes.filter(
-      (d) =>
+      (d: DisputeUI) =>
         d.claimer.toLowerCase() === address.toLowerCase() ||
         d.defender.toLowerCase() === address.toLowerCase(),
     );
@@ -83,7 +83,7 @@ export default function DisputeManagerPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {myCases.map((dispute) => (
+            {myCases.map((dispute: DisputeUI) => (
               <ManagerCaseCard
                 key={dispute.id}
                 dispute={dispute}
@@ -107,12 +107,8 @@ const ManagerCaseCard = ({
 }) => {
   const router = useRouter();
 
-  // FIX: Store 'now' in state to ensure purity during render
-  const [now, setNow] = useState(0);
-
-  useEffect(() => {
-    setNow(Date.now());
-  }, []);
+  // FIX: Use lazy initialization for 'now' to ensure purity during render
+  const [now] = useState(() => Date.now());
 
   // Determine Role
   const isClaimer = dispute.claimer.toLowerCase() === address?.toLowerCase();

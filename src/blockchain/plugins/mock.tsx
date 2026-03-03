@@ -29,28 +29,22 @@ const setStoredConnection = (value: boolean) => {
 };
 
 const useAccount = (): BlockchainAccount => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(() => getStoredConnection());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Only handle storage events (sync across tabs) and auto-connect delay
     const storedValue = window.localStorage.getItem(CONNECT_KEY);
-    if (storedValue === "true") {
-      setIsConnected(true);
-      return;
+    if (storedValue === null) {
+      // Auto-connect for demo purposes if no stored value
+      const timer = window.setTimeout(() => {
+        setIsConnected(true);
+        setStoredConnection(true);
+      }, 500);
+
+      return () => window.clearTimeout(timer);
     }
-
-    if (storedValue === "false") {
-      setIsConnected(false);
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setIsConnected(true);
-      setStoredConnection(true);
-    }, 500);
-
-    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

@@ -16,40 +16,52 @@ const pluginName = process.env.NEXT_PUBLIC_BLOCKCHAIN_PLUGIN ?? "mock";
 
 type PluginName = "stellar" | "mock";
 
-const plugins: Record<PluginName, typeof mockPlugin | typeof stellarPlugin> = {
-  stellar: stellarPlugin,
-  mock: mockPlugin,
+type ProviderProps = { initialState?: unknown; children: ReactNode };
+
+// Pre-create provider components at module level for each plugin
+// This avoids creating components during render
+const MockProvider = mockPlugin.getProviderComponent() as React.ComponentType<ProviderProps>;
+const StellarProvider = stellarPlugin.getProviderComponent() as React.ComponentType<ProviderProps>;
+
+const providerComponents: Record<PluginName, React.ComponentType<ProviderProps>> = {
+  stellar: StellarProvider,
+  mock: MockProvider,
 };
 
-const getPlugin = (name: string) => {
-  const plugin = plugins[name as PluginName];
+const getPlugin = (name: string): { plugin: typeof mockPlugin | typeof stellarPlugin; name: PluginName } => {
+  const pluginNameResolved = name as PluginName;
+  const plugins = {
+    stellar: stellarPlugin,
+    mock: mockPlugin,
+  };
+  const plugin = plugins[pluginNameResolved];
   if (!plugin) {
     console.warn(
       `Unknown plugin "${name}", falling back to mock. Available: stellar, mock`
     );
-    return mockPlugin;
+    return { plugin: mockPlugin, name: "mock" };
   }
-  return plugin;
+  return { plugin, name: pluginNameResolved };
 };
 
 interface Props {
   children: ReactNode;
   tenant: Tenant;
-  initialState?: any;
+  initialState?: unknown;
 }
 
 export default function ContextProvider({ children, tenant, initialState }: Props) {
   const [isReady, setIsReady] = useState(false);
-  const [activePlugin, setActivePlugin] = useState<
-    typeof mockPlugin | typeof stellarPlugin
-  >(() => getPlugin(pluginName));
+  const [pluginInfo, setPluginInfo] = useState<{ plugin: typeof mockPlugin | typeof stellarPlugin; name: PluginName }>(
+    () => getPlugin(pluginName)
+  );
 
   useEffect(() => {
-    const plugin = getPlugin(pluginName);
+    const info = getPlugin(pluginName);
     console.log(`[Providers] Initializing blockchain plugin: ${pluginName}`);
-    registry.register(plugin);
+    registry.register(info.plugin);
     registry.activate(pluginName).then(() => {
-      setActivePlugin(plugin);
+      setPluginInfo(info);
       setIsReady(true);
     });
   }, [tenant]);
@@ -62,15 +74,16 @@ export default function ContextProvider({ children, tenant, initialState }: Prop
     );
   }
 
-  const BlockchainProvider = activePlugin.getProviderComponent();
+  // Get the pre-created provider component
+  const ProviderComponent = providerComponents[pluginInfo.name];
 
   return (
-    <BlockchainContextProvider plugin={activePlugin}>
+    <BlockchainContextProvider plugin={pluginInfo.plugin}>
       <SupabaseProvider>
         <QueryClientProvider client={queryClient}>
-          <BlockchainProvider initialState={initialState}>
+          <ProviderComponent initialState={initialState}>
             <TimerProvider>{children}</TimerProvider>
-          </BlockchainProvider>
+          </ProviderComponent>
         </QueryClientProvider>
       </SupabaseProvider>
     </BlockchainContextProvider>

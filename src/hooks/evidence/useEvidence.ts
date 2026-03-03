@@ -3,6 +3,27 @@ import { isStellarAddress, shortenAddress } from "@/util/address";
 
 export type EvidenceRole = "claimant" | "defendant";
 
+export interface ImageEvidence {
+  id: string;
+  type: "image";
+  url: string;
+  description: string;
+  uploadDate: string;
+}
+
+export interface AudioEvidence {
+  id: string;
+  title: string;
+  duration: string;
+  url: string;
+}
+
+export interface CarouselImage {
+  id: string;
+  url: string;
+  description: string;
+}
+
 export function useEvidence(disputeId: string, role: EvidenceRole) {
   const { dispute } = useGetDispute(disputeId);
   const isClaimant = role === "claimant";
@@ -48,7 +69,7 @@ export function useEvidence(disputeId: string, role: EvidenceRole) {
     : dispute?.defenderAudioEvidence; // Use defender specific audio
 
   // Process Images
-  const imageEvidence = rawCarousel.map((url: string, i: number) => ({
+  const imageEvidence: ImageEvidence[] = rawCarousel.map((url: string, i: number) => ({
     id: `img-${i}`,
     type: "image" as const,
     url,
@@ -57,7 +78,7 @@ export function useEvidence(disputeId: string, role: EvidenceRole) {
   }));
 
   // Process Audio
-  const audioEvidence = rawAudio
+  const audioEvidence: AudioEvidence | null = rawAudio
     ? {
         id: `audio-${role}`,
         title: `${partyInfo.role}'s Statement`,
@@ -70,7 +91,7 @@ export function useEvidence(disputeId: string, role: EvidenceRole) {
   const videoEvidence: any[] = [];
 
   // Real Carousel (Added to match previous implementation structure if needed)
-  const carouselImages = rawCarousel.map((url: string, i: number) => ({
+  const carouselImages: CarouselImage[] = rawCarousel.map((url: string, i: number) => ({
     id: `slide-${i}`,
     url: url,
     description: `Evidence #${i + 1}`,

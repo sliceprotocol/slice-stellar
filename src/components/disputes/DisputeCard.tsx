@@ -5,7 +5,6 @@ import {
   CheckCircle2,
   XCircle,
   ArrowRight,
-  Tag,
   Users,
   Coins,
   Clock,
@@ -13,11 +12,8 @@ import {
   Briefcase,
   ShoppingBag,
   Scale,
-  Gavel,
-  Lock,
-  Archive,
 } from "lucide-react";
-import type { Dispute } from "@/blockchain/hooks";
+import type { DisputeUI as BaseDisputeUI } from "@/util/disputeAdapter";
 import { cn } from "@/lib/utils";
 
 // Helper to get Lucide icon component based on category string
@@ -41,7 +37,7 @@ const CategoryIcon = ({
   return <Scale className={className} />;
 };
 
-type DisputeUI = Dispute & {
+type DisputeUI = BaseDisputeUI & {
   votesCount?: number;
   totalVotes?: number;
   prize?: string;

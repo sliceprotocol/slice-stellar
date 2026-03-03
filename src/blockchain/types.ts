@@ -107,7 +107,7 @@ export interface BlockchainHooks {
     isCreating: boolean;
   };
   usePayDispute: () => {
-    payDispute: (disputeId: any) => Promise<boolean>;
+    payDispute: (disputeId: any, amount?: any) => Promise<boolean>;
     isPaying: boolean;
   };
   useExecuteRuling: () => {
