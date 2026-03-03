@@ -1,5 +1,5 @@
 #![cfg(test)]
-use crate::{xlm, Slice, SliceClient};
+use crate::{test_token, Slice, SliceClient};
 use soroban_sdk::{symbol_short, testutils::Address as _, Address, BytesN, Env};
 
 #[test]
@@ -14,18 +14,20 @@ fn test_stake_and_join_multiple_disputes() {
     let claimer2 = Address::generate(&env);
     let defender2 = Address::generate(&env);
 
-    xlm::register(&env, &admin);
-    let xlm_sac = xlm::stellar_asset_client(&env);
-    xlm_sac.mint(&juror, &10000);
-    xlm_sac.mint(&claimer1, &10000);
-    xlm_sac.mint(&defender1, &10000);
-    xlm_sac.mint(&claimer2, &10000);
-    xlm_sac.mint(&defender2, &10000);
+    let sac = test_token::register_token(&env, &admin);
+    let token_addr = sac.address();
+    let sac_client = test_token::stellar_asset_client(&env, &token_addr);
+    sac_client.mint(&juror, &10000);
+    sac_client.mint(&claimer1, &10000);
+    sac_client.mint(&defender1, &10000);
+    sac_client.mint(&claimer2, &10000);
+    sac_client.mint(&defender2, &10000);
 
     let contract_id = env.register(
         Slice,
         (
             admin.clone(),
+            token_addr.clone(),
             3600u64,
             86400u64,
             7200u64,
@@ -103,6 +105,8 @@ fn test_stake_and_join_multiple_disputes() {
     assert_eq!(client.get_total_staked(&juror), 700);
     assert_eq!(client.get_stake_in_disputes(&juror), 700);
     assert_eq!(client.get_available_stake(&juror), 0);
+
+    let _ = (result1_id, result1_addr, result2_id, result2_addr);
 }
 
 #[test]
@@ -115,16 +119,18 @@ fn test_insufficient_stake_prevents_join() {
     let claimer = Address::generate(&env);
     let defender = Address::generate(&env);
 
-    xlm::register(&env, &admin);
-    let xlm_sac = xlm::stellar_asset_client(&env);
-    xlm_sac.mint(&juror, &10000);
-    xlm_sac.mint(&claimer, &10000);
-    xlm_sac.mint(&defender, &10000);
+    let sac = test_token::register_token(&env, &admin);
+    let token_addr = sac.address();
+    let sac_client = test_token::stellar_asset_client(&env, &token_addr);
+    sac_client.mint(&juror, &10000);
+    sac_client.mint(&claimer, &10000);
+    sac_client.mint(&defender, &10000);
 
     let contract_id = env.register(
         Slice,
         (
             admin.clone(),
+            token_addr.clone(),
             3600u64,
             86400u64,
             7200u64,
