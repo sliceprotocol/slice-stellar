@@ -14,7 +14,8 @@ pub const CATEGORIES_KEY: &Symbol = &symbol_short!("CATS");
 pub const CONFIG_KEY: &Symbol = &symbol_short!("CONF");
 pub const DISPUTE_COUNTER_KEY: &Symbol = &symbol_short!("CNTR");
 
-// UltraHonk verifier contract address
+// UltraHonk verifier contract address - temporarily unused until ZK integration is enabled
+#[allow(dead_code)]
 pub const ULTRAHONK_CONTRACT_ADDRESS: &str =
     "CAXMCB6EYJ6Z6PHHC3MZ54IKHAZV5WSM2OAK4DSGM2E2M6DJG4FX5CPB";
 
@@ -74,6 +75,7 @@ pub struct Categories {
 #[derive(Clone)]
 pub struct Config {
     pub admin: Address,
+    pub token: Address,
 
     pub min_pay_seconds: u64,
     pub max_pay_seconds: u64,

@@ -16,7 +16,6 @@ doctest = false
 
 [dependencies]
 soroban-sdk = { version = "23.1.0", default-features = false, features = ["alloc"] }
-stellar-registry = "0.0.5"
 sha2 = { version = "0.10", default-features = false }
 
 [dev-dependencies]
