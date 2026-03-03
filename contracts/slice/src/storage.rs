@@ -1,4 +1,3 @@
-#![no_std]
 use crate::error::ContractError;
 use crate::types::{Categories, Config, Dispute, CATEGORIES_KEY, CONFIG_KEY, DISPUTE_COUNTER_KEY};
 use soroban_sdk::{BytesN, Env, Symbol, Vec};

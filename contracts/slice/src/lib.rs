@@ -2,15 +2,17 @@
 use error::ContractError;
 use sha2::{Digest, Sha256};
 use soroban_sdk::{contract, contractimpl, Address, Bytes, BytesN, Env, Symbol, Vec};
-use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits, ULTRAHONK_CONTRACT_ADDRESS};
+use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits};
 
 mod error;
 mod storage;
 mod types;
 mod xlm;
+mod mnemonic_generator;
 
 mod ultrahonk_contract {
-    soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
+    // TODO: Add ultrahonk_soroban_contract.wasm for ZK proof verification
+    // soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
 }
 
 #[contract]
@@ -355,8 +357,8 @@ impl Slice {
         dispute_id: u64,
         vote: u32,
         salt: BytesN<32>,
-        vk_json: Bytes,
-        proof_blob: Bytes,
+        _vk_json: Bytes,
+        _proof_blob: Bytes,
     ) -> Result<(), ContractError> {
         caller.require_auth();
 
