@@ -172,7 +172,6 @@ impl Slice {
         };
 
         storage::set_dispute(&env, &dispute);
-        storage::add_dispute_to_queue(&env, id);
         Ok(id)
     }
 
@@ -758,6 +757,46 @@ mod tests {
         client.pay_dispute(&claimer, &dispute_id, &20);
         client.pay_dispute(&defender, &dispute_id, &20);
         dispute_id
+    }
+
+    #[test]
+    fn dispute_is_queued_only_after_commit_transition() {
+        let env = Env::default();
+        let (contract_id, client, category) = setup_contract(&env);
+
+        let claimer = Address::generate(&env);
+        let defender = Address::generate(&env);
+        let limits = TimeLimits {
+            pay_seconds: 100,
+            commit_seconds: 200,
+            reveal_seconds: 300,
+        };
+        let allowed_jurors: Option<Vec<Address>> = None;
+
+        let dispute_id = client.create_dispute(
+            &claimer,
+            &defender,
+            &BytesN::from_array(&env, &[1u8; 32]),
+            &10,
+            &100,
+            &category,
+            &allowed_jurors,
+            &5,
+            &limits,
+        );
+
+        let queue_after_create = env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(!queue_after_create.contains(&dispute_id));
+
+        client.pay_dispute(&claimer, &dispute_id, &20);
+        let queue_after_one_payment =
+            env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(!queue_after_one_payment.contains(&dispute_id));
+
+        client.pay_dispute(&defender, &dispute_id, &20);
+        let queue_after_both_payments =
+            env.as_contract(&contract_id, || storage::get_draft_queue(&env));
+        assert!(queue_after_both_payments.contains(&dispute_id));
     }
 
     #[test]
