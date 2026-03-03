@@ -1,24 +1,23 @@
 #![no_std]
 use error::ContractError;
 use sha2::{Digest, Sha256};
-use soroban_sdk::{contract, contractimpl, Address, Bytes, BytesN, Env, Symbol, Vec};
+use soroban_sdk::{contract, contractimpl, token, Address, Bytes, BytesN, Env, Symbol, Vec};
 use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits};
 
 mod error;
 mod storage;
+#[cfg(test)]
+mod test_token;
 mod types;
-mod xlm;
 
 #[cfg(test)]
 mod test_staking;
 
-#[cfg(not(test))]
-mod ultrahonk_contract {
-    soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
-}
-
-#[cfg(not(test))]
-use types::ULTRAHONK_CONTRACT_ADDRESS;
+// UltraHonk ZK verifier - disabled until wasm artifact is available
+// #[cfg(not(test))]
+// mod ultrahonk_contract {
+//     soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
+// }
 
 #[contract]
 pub struct Slice;
@@ -28,6 +27,7 @@ impl Slice {
     pub fn __constructor(
         env: Env,
         admin: Address,
+        token: Address,
         min_pay_seconds: u64,
         max_pay_seconds: u64,
         min_commit_seconds: u64,
@@ -39,6 +39,7 @@ impl Slice {
 
         let config = Config {
             admin: admin.clone(),
+            token,
             min_pay_seconds,
             max_pay_seconds,
             min_commit_seconds,
@@ -206,6 +207,11 @@ impl Slice {
             return Err(ContractError::ErrInvalidAmount);
         }
 
+        // Transfer tokens from caller to contract
+        let config = storage::get_config(&env)?;
+        let token_client = token::Client::new(&env, &config.token);
+        token_client.transfer(&caller, &env.current_contract_address(), &amount);
+
         if caller == dispute.claimer {
             if dispute.claimer_paid {
                 return Err(ContractError::ErrAlreadyPaid);
@@ -235,9 +241,10 @@ impl Slice {
             return Err(ContractError::ErrInvalidAmount);
         }
 
-        let xlm_client = xlm::token_client(&env);
+        let config = storage::get_config(&env)?;
+        let token_client = token::Client::new(&env, &config.token);
         let contract_addr = env.current_contract_address();
-        xlm_client.transfer(&caller, &contract_addr, &amount);
+        token_client.transfer(&caller, &contract_addr, &amount);
 
         let current = storage::get_total_staked(&env, &caller);
         storage::set_total_staked(&env, &caller, current + amount);
@@ -260,9 +267,10 @@ impl Slice {
             return Err(ContractError::ErrInsufficientStake);
         }
 
-        let xlm_client = xlm::token_client(&env);
+        let config = storage::get_config(&env)?;
+        let token_client = token::Client::new(&env, &config.token);
         let contract_addr = env.current_contract_address();
-        xlm_client.transfer(&contract_addr, &caller, &amount);
+        token_client.transfer(&contract_addr, &caller, &amount);
 
         storage::set_total_staked(&env, &caller, total - amount);
 
@@ -413,8 +421,8 @@ impl Slice {
         dispute_id: u64,
         vote: u32,
         salt: BytesN<32>,
-        vk_json: Bytes,
-        proof_blob: Bytes,
+        _vk_json: Bytes,
+        _proof_blob: Bytes,
     ) -> Result<(), ContractError> {
         caller.require_auth();
 
@@ -576,12 +584,12 @@ impl Slice {
             0
         };
 
-        let xlm_client = xlm::token_client(&env);
-        let contract_addr = env.current_contract_address();
         let config = storage::get_config(&env)?;
+        let token_client = token::Client::new(&env, &config.token);
+        let contract_addr = env.current_contract_address();
 
         if admin_fee > 0 {
-            let _ = xlm_client.try_transfer(&contract_addr, &config.admin, &admin_fee);
+            let _ = token_client.try_transfer(&contract_addr, &config.admin, &admin_fee);
         }
 
         let winner = if winner_vote == 1 {
@@ -591,7 +599,7 @@ impl Slice {
         };
 
         if reward_each > 0 {
-            let _ = xlm_client.try_transfer(&contract_addr, &winner, &reward_each);
+            let _ = token_client.try_transfer(&contract_addr, &winner, &reward_each);
         }
 
         for i in 0..juror_count {
@@ -608,7 +616,7 @@ impl Slice {
 
             if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
                 if reward_each > 0 {
-                    let _ = xlm_client.try_transfer(&contract_addr, &juror, &reward_each);
+                    let _ = token_client.try_transfer(&contract_addr, &juror, &reward_each);
                 }
             } else {
                 storage::set_total_staked(&env, &juror, total - stake);
