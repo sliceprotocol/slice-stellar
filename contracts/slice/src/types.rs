@@ -13,8 +13,14 @@ pub enum DisputeStatus {
 pub const CATEGORIES_KEY: &Symbol = &symbol_short!("CATS");
 pub const CONFIG_KEY: &Symbol = &symbol_short!("CONF");
 pub const DISPUTE_COUNTER_KEY: &Symbol = &symbol_short!("CNTR");
+pub const CONFIG_VERSION_KEY: &Symbol = &symbol_short!("CONFVER");
 
-// UltraHonk verifier contract address
+// Config versions
+pub const CONFIG_VERSION_V1: u32 = 1; // Original config without token field
+pub const CONFIG_VERSION_V2: u32 = 2; // Current config with token field
+
+// UltraHonk verifier contract address - temporarily unused until ZK integration is enabled
+#[allow(dead_code)]
 pub const ULTRAHONK_CONTRACT_ADDRESS: &str =
     "CAXMCB6EYJ6Z6PHHC3MZ54IKHAZV5WSM2OAK4DSGM2E2M6DJG4FX5CPB";
 
@@ -70,10 +76,29 @@ pub struct Categories {
     pub items: Vec<Symbol>,
 }
 
+/// Legacy config format (V1) without token field.
+/// Used for migration from pre-token contracts.
+#[contracttype]
+#[derive(Clone)]
+pub struct ConfigV1 {
+    pub admin: Address,
+
+    pub min_pay_seconds: u64,
+    pub max_pay_seconds: u64,
+
+    pub min_commit_seconds: u64,
+    pub max_commit_seconds: u64,
+
+    pub min_reveal_seconds: u64,
+    pub max_reveal_seconds: u64,
+}
+
+/// Current config format (V2) with configurable token.
 #[contracttype]
 #[derive(Clone)]
 pub struct Config {
     pub admin: Address,
+    pub token: Address,
 
     pub min_pay_seconds: u64,
     pub max_pay_seconds: u64,

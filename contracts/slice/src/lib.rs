@@ -1,17 +1,19 @@
 #![no_std]
 use error::ContractError;
 use sha2::{Digest, Sha256};
-use soroban_sdk::{contract, contractimpl, Address, Bytes, BytesN, Env, Symbol, Vec};
-use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits, ULTRAHONK_CONTRACT_ADDRESS};
+use soroban_sdk::{contract, contractimpl, token, Address, Bytes, BytesN, Env, Symbol, Vec};
+use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits};
 
 mod error;
 mod storage;
+#[cfg(test)]
+mod test_token;
 mod types;
-mod xlm;
 
-mod ultrahonk_contract {
-    soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
-}
+// UltraHonk ZK verifier - temporarily disabled until wasm is available
+// mod ultrahonk_contract {
+//     soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
+// }
 
 #[contract]
 pub struct Slice;
@@ -21,6 +23,7 @@ impl Slice {
     pub fn __constructor(
         env: Env,
         admin: Address,
+        token: Address,
         min_pay_seconds: u64,
         max_pay_seconds: u64,
         min_commit_seconds: u64,
@@ -32,6 +35,7 @@ impl Slice {
 
         let config = Config {
             admin: admin.clone(),
+            token,
             min_pay_seconds,
             max_pay_seconds,
             min_commit_seconds,
@@ -47,6 +51,21 @@ impl Slice {
         };
         storage::set_categories(&env, &categories);
         storage::set_dispute_counter(&env, 0u64);
+    }
+
+    /// Migrate config from V1 (without token) to V2 (with token).
+    /// Must be called by admin after upgrading from a pre-token contract.
+    pub fn migrate_config(env: Env, token: Address) -> Result<(), ContractError> {
+        // Get admin from V1 config and require auth
+        let admin = storage::get_config_v1_admin(&env)?;
+        admin.require_auth();
+
+        storage::migrate_config(&env, token)
+    }
+
+    /// Get the current config version (1 = legacy, 2 = current with token).
+    pub fn get_config_version(env: Env) -> u32 {
+        storage::get_config_version(&env)
     }
 
     pub fn add_category(env: Env, name: Symbol) -> Result<(), ContractError> {
@@ -199,6 +218,11 @@ impl Slice {
             return Err(ContractError::ErrInvalidAmount);
         }
 
+        // Transfer tokens from caller to contract
+        let config = storage::get_config(&env)?;
+        let token_client = token::Client::new(&env, &config.token);
+        token_client.transfer(&caller, &env.current_contract_address(), &amount);
+
         if caller == dispute.claimer {
             if dispute.claimer_paid {
                 return Err(ContractError::ErrAlreadyPaid);
@@ -278,6 +302,11 @@ impl Slice {
             return Err(ContractError::ErrAlreadyJuror);
         }
 
+        // Transfer stake from juror to contract
+        let config = storage::get_config(&env)?;
+        let token_client = token::Client::new(&env, &config.token);
+        token_client.transfer(&caller, &env.current_contract_address(), &stake_amount);
+
         dispute.assigned_jurors.push_back(caller.clone());
         dispute.juror_stakes.push_back(stake_amount);
 
@@ -355,8 +384,8 @@ impl Slice {
         dispute_id: u64,
         vote: u32,
         salt: BytesN<32>,
-        vk_json: Bytes,
-        proof_blob: Bytes,
+        _vk_json: Bytes,
+        _proof_blob: Bytes,
     ) -> Result<(), ContractError> {
         caller.require_auth();
 
@@ -518,12 +547,12 @@ impl Slice {
             0
         };
 
-        let xlm_client = xlm::token_client(&env);
-        let contract_addr = env.current_contract_address();
         let config = storage::get_config(&env)?;
+        let token_client = token::Client::new(&env, &config.token);
+        let contract_addr = env.current_contract_address();
 
         if admin_fee > 0 {
-            let _ = xlm_client.try_transfer(&contract_addr, &config.admin, &admin_fee);
+            let _ = token_client.try_transfer(&contract_addr, &config.admin, &admin_fee);
         }
 
         let winner = if winner_vote == 1 {
@@ -533,7 +562,7 @@ impl Slice {
         };
 
         if reward_each > 0 {
-            let _ = xlm_client.try_transfer(&contract_addr, &winner, &reward_each);
+            let _ = token_client.try_transfer(&contract_addr, &winner, &reward_each);
 
             for i in 0..juror_count {
                 if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
@@ -541,7 +570,7 @@ impl Slice {
                         .assigned_jurors
                         .get(i)
                         .ok_or(ContractError::ErrInternalState)?;
-                    let _ = xlm_client.try_transfer(&contract_addr, &juror, &reward_each);
+                    let _ = token_client.try_transfer(&contract_addr, &juror, &reward_each);
                 }
             }
         }
