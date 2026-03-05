@@ -1,11 +1,11 @@
 [package]
 name = "slice"
 description = "Slice - Sistema de resolución de disputas Kleros-like con voto privado ZK"
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/Godsmiracle001/slice-stellar"
 publish = false
-version.workspace = true
+version = "0.1.0"
 
 [package.metadata.stellar]
 cargo_inherit = true
@@ -15,11 +15,11 @@ crate-type = ["cdylib"]
 doctest = false
 
 [dependencies]
-soroban-sdk = { workspace = true, default-features = false, features = ["alloc"] }
-stellar-registry.workspace = true
-sha2.workspace = true
+soroban-sdk = { version = "23.1.0", default-features = false, features = ["alloc"] }
+stellar-registry = "0.0.5"
+sha2 = { version = "0.10", default-features = false }
 
 [dev-dependencies]
-stellar-xdr = { workspace = true, features = ["curr", "serde"] }
-soroban-sdk = { workspace = true, features = ["testutils"] }
+stellar-xdr = { version = "24.0.0", features = ["curr", "serde"] }
+soroban-sdk = { version = "23.1.0", features = ["testutils"] }
 
