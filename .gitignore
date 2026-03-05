@@ -51,3 +51,8 @@ artifacts/
 cache/
 
 notes.txt
+
+# rust contract artifacts
+/contracts/slice/target/
+/contracts/slice/test_snapshots/
+/contracts/slice/Cargo.lock

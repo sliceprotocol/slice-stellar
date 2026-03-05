@@ -1,11 +1,11 @@
 [package]
 name = "slice"
 description = "Slice - Sistema de resolución de disputas Kleros-like con voto privado ZK"
-edition.workspace = true
-license.workspace = true
-repository.workspace = true
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/Godsmiracle001/slice-stellar"
 publish = false
-version.workspace = true
+version = "0.1.0"
 
 [package.metadata.stellar]
 cargo_inherit = true

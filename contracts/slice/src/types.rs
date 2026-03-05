@@ -13,6 +13,7 @@ pub enum DisputeStatus {
 pub const CATEGORIES_KEY: &Symbol = &symbol_short!("CATS");
 pub const CONFIG_KEY: &Symbol = &symbol_short!("CONF");
 pub const DISPUTE_COUNTER_KEY: &Symbol = &symbol_short!("CNTR");
+pub const DRAFT_QUEUE_KEY: &Symbol = &symbol_short!("DQUEUE");
 
 // UltraHonk verifier contract address
 pub const ULTRAHONK_CONTRACT_ADDRESS: &str =
