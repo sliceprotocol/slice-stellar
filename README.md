@@ -104,9 +104,11 @@ NEXT_PUBLIC_PINATA_GATEWAY_URL="your_gateway_url"
 # Supabase Auth (For Passkeys & Email Auth) 🆕
 NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="your_anon_key"
+SUPABASE_SERVICE_ROLE_KEY="your_service_role_key"
 
 # Stellar Network Configuration
 NEXT_PUBLIC_STELLAR_NETWORK="testnet" # or 'mainnet'
+NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
 NEXT_PUBLIC_STELLAR_RPC_URL="https://soroban-testnet.stellar.org"
 NEXT_PUBLIC_STELLAR_HORIZON_URL="https://horizon-testnet.stellar.org"
 
@@ -138,6 +140,20 @@ supabase db push
 
 - **PWA Mode:** Open `http://localhost:3000`
 - **Stellar Mode:** Use `http://stellar.localhost:3000` (requires host emulation)
+
+### 5. Run with Docker
+
+```bash
+docker compose up --build
+```
+
+Build Soroban contract artifacts inside the contracts container:
+
+```bash
+docker compose --profile contracts up contracts --build
+```
+
+This writes optimized `.wasm` outputs into `contracts/slice/target/` on your host.
 
 ---
 

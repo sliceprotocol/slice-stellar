@@ -1,0 +1,25 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: slice-app:local
+    env_file:
+      - .env.local
+    volumes:
+      - ./.env.local:/app/.env.local:ro
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  contracts:
+    build:
+      context: ./contracts
+      dockerfile: Dockerfile
+    image: slice-contracts-builder:local
+    working_dir: /workspace/contracts/slice
+    command: /bin/sh -c "soroban contract build && soroban contract optimize --wasm target/wasm32-unknown-unknown/release/slice.wasm"
+    volumes:
+      - ./contracts:/workspace/contracts
+    profiles:
+      - contracts
