@@ -22,20 +22,19 @@ fn test_stake_and_join_multiple_disputes() {
     xlm_sac.mint(&claimer2, &10000);
     xlm_sac.mint(&defender2, &10000);
 
-    let contract_id = env.register_contract(None, Slice);
-    let client = SliceClient::new(&env, &contract_id);
-
-    // Call constructor through client - it will handle the contract context
-    Slice::__constructor(
-        env.clone(),
-        admin.clone(),
-        3600,
-        86400,
-        7200,
-        172800,
-        14400,
-        259200,
+    let contract_id = env.register(
+        Slice,
+        (
+            admin.clone(),
+            3600u64,
+            86400u64,
+            7200u64,
+            172800u64,
+            14400u64,
+            259200u64,
+        ),
     );
+    let client = SliceClient::new(&env, &contract_id);
 
     let category = symbol_short!("TEST");
     client.add_category(&category);
@@ -122,19 +121,19 @@ fn test_insufficient_stake_prevents_join() {
     xlm_sac.mint(&claimer, &10000);
     xlm_sac.mint(&defender, &10000);
 
-    let contract_id = env.register_contract(None, Slice);
-    let client = SliceClient::new(&env, &contract_id);
-
-    Slice::__constructor(
-        env.clone(),
-        admin.clone(),
-        3600,
-        86400,
-        7200,
-        172800,
-        14400,
-        259200,
+    let contract_id = env.register(
+        Slice,
+        (
+            admin.clone(),
+            3600u64,
+            86400u64,
+            7200u64,
+            172800u64,
+            14400u64,
+            259200u64,
+        ),
     );
+    let client = SliceClient::new(&env, &contract_id);
 
     let category = symbol_short!("TEST");
     client.add_category(&category);
