@@ -204,12 +204,13 @@ export const mockPlugin: BlockchainPlugin = {
       };
     },
     useStake: () => {
-      const { execute, isLoading } = useMockAction("Stake");
+      const { execute: stakeExecute, isLoading: isStaking } = useMockAction("Stake");
+      const { execute: unstakeExecute, isLoading: isUnstaking } = useMockAction("Unstake");
       return {
-        stake: execute,
-        unstake: execute,
-        isStaking: isLoading,
-        isUnstaking: isLoading,
+        stake: stakeExecute,
+        unstake: unstakeExecute,
+        isStaking,
+        isUnstaking,
       };
     },
     useStakeInfo: (address?: string) => ({
