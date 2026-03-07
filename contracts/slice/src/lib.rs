@@ -2,7 +2,7 @@
 use error::ContractError;
 use sha2::{Digest, Sha256};
 use soroban_sdk::{contract, contractimpl, Address, Bytes, BytesN, Env, Symbol, Vec};
-use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits, ULTRAHONK_CONTRACT_ADDRESS};
+use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits};
 
 mod error;
 mod storage;
@@ -12,9 +12,13 @@ mod xlm;
 #[cfg(test)]
 mod test_staking;
 
+#[cfg(not(test))]
 mod ultrahonk_contract {
     soroban_sdk::contractimport!(file = "ultrahonk_soroban_contract.wasm");
 }
+
+#[cfg(not(test))]
+use types::ULTRAHONK_CONTRACT_ADDRESS;
 
 #[contract]
 pub struct Slice;
@@ -603,7 +607,6 @@ impl Slice {
             let total = storage::get_total_staked(&env, &juror);
 
             if correctness.get(i).ok_or(ContractError::ErrInternalState)? == 1 {
-                storage::set_total_staked(&env, &juror, total + reward_each);
                 if reward_each > 0 {
                     let _ = xlm_client.try_transfer(&contract_addr, &juror, &reward_each);
                 }
