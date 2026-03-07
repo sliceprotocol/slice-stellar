@@ -212,7 +212,7 @@ export const mockPlugin: BlockchainPlugin = {
         isUnstaking: isLoading,
       };
     },
-    useStakeInfo: () => ({
+    useStakeInfo: (address?: string) => ({
       totalStaked: 1000n,
       stakeInDisputes: 300n,
       availableStake: 700n,
