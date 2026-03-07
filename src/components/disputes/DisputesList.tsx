@@ -9,7 +9,7 @@ import { useDisputeList } from "@/blockchain/hooks";
 export const DisputesList: React.FC = () => {
   const router = useRouter();
   const { isConnected } = useAccount();
-  const { disputes, isLoading } = useDisputeList("juror");
+  const { disputes, isLoading } = useDisputeList();
 
   if (!isConnected) {
     return (

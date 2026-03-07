@@ -16,6 +16,12 @@ type Schema = {
   walletNetwork: string;
   networkPassphrase: string;
   contractId: string;
+  slice_debug_mode: boolean;
+  slice_address_book: Array<{
+    name: string;
+    address: string;
+    avatar?: string;
+  }>;
 };
 
 /**
@@ -24,14 +30,14 @@ type Schema = {
  * Implementation has been borrowed and simplified from https://www.npmjs.com/package/typed-local-store
  */
 class TypedStorage<T> {
-  private readonly storage: Storage;
+  private readonly storage: Storage | null;
 
   constructor() {
-    this.storage = localStorage;
+    this.storage = typeof window !== "undefined" ? window.localStorage : null;
   }
 
   public get length(): number {
-    return this.storage?.length;
+    return this.storage?.length ?? 0;
   }
 
   public key<U extends keyof T>(index: number): U {
@@ -45,7 +51,7 @@ class TypedStorage<T> {
     const item = this.storage?.getItem(key.toString());
 
     if (item == null) {
-      return item;
+      return null;
     }
 
     try {

@@ -5,6 +5,7 @@ use soroban_sdk::{contract, contractimpl, Address, Bytes, BytesN, Env, Symbol, V
 use types::{Categories, Config, Dispute, DisputeStatus, TimeLimits};
 
 mod error;
+mod mnemonic_generator;
 mod storage;
 mod types;
 mod xlm;
@@ -456,16 +457,15 @@ impl Slice {
             .ok_or(ContractError::ErrInternalState)?
             .ok_or(ContractError::ErrInvalidProof)?;
 
-        // // 1. Verify ZK proof via UltraHonk
-        // let addr = Address::from_str(&env, ULTRAHONK_CONTRACT_ADDRESS);
-        // let client = ultrahonk_contract::Client::new(&env, &addr);
+        // 1. Verify ZK proof via UltraHonk
+        let addr = Address::from_str(&env, ULTRAHONK_CONTRACT_ADDRESS);
+        let client = ultrahonk_contract::Client::new(&env, &addr);
+        match client.try_verify_proof(&vk_json, &proof_blob) {
+            Ok(Ok(_)) => {}
+            _ => return Err(ContractError::ErrInvalidProof),
+        }
 
-        // match client.try_verify_proof(&vk_json, &proof_blob) {
-        //     Ok(Ok(_)) => {}
-        //     _ => return Err(ContractError::ErrInvalidProof),
-        // }
-
-        // // 2. Verify SHA256(vote || salt) == commitment
+        // 2. Verify SHA256(vote || salt) == commitment
         let computed = compute_commitment(&env, vote, &salt)?;
         if computed != stored_commit {
             return Err(ContractError::ErrInvalidProof);

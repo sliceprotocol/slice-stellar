@@ -5,40 +5,103 @@ import { Tenant } from "@/config/tenant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { registry, BlockchainContextProvider } from "@/blockchain";
 import { mockPlugin } from "@/blockchain/plugins/mock";
+import { stellarPlugin } from "@/blockchain/plugins/stellar";
 import { TimerProvider } from "@/contexts/TimerContext";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 
 const queryClient = new QueryClient();
 
+// Resolve plugin based on environment variable
+const pluginName = process.env.NEXT_PUBLIC_BLOCKCHAIN_PLUGIN ?? "mock";
+
+type PluginName = "stellar" | "mock";
+
+type ProviderProps = { initialState?: unknown; children: ReactNode };
+
+// Pre-create provider components at module level for each plugin
+// This avoids creating components during render
+const MockProvider = mockPlugin.getProviderComponent() as React.ComponentType<ProviderProps>;
+const StellarProvider = stellarPlugin.getProviderComponent() as React.ComponentType<ProviderProps>;
+
+const providerComponents: Record<PluginName, React.ComponentType<ProviderProps>> = {
+  stellar: StellarProvider,
+  mock: MockProvider,
+};
+
+const getPlugin = (name: string): { plugin: typeof mockPlugin | typeof stellarPlugin; name: PluginName } => {
+  const pluginNameResolved = name as PluginName;
+  const plugins = {
+    stellar: stellarPlugin,
+    mock: mockPlugin,
+  };
+  const plugin = plugins[pluginNameResolved];
+  if (!plugin) {
+    console.warn(
+      `Unknown plugin "${name}", falling back to mock. Available: stellar, mock`
+    );
+    return { plugin: mockPlugin, name: "mock" };
+  }
+  return { plugin, name: pluginNameResolved };
+};
+
 interface Props {
   children: ReactNode;
   tenant: Tenant;
-  initialState?: any;
+  initialState?: unknown;
 }
 
 export default function ContextProvider({ children, tenant, initialState }: Props) {
   const [isReady, setIsReady] = useState(false);
+  const [pluginInfo, setPluginInfo] = useState<{ plugin: typeof mockPlugin | typeof stellarPlugin; name: PluginName }>(
+    () => getPlugin(pluginName)
+  );
 
   useEffect(() => {
-    registry.register(mockPlugin);
-    registry.activate("mock").then(() => setIsReady(true));
+    let isMounted = true;
+    const info = getPlugin(pluginName);
+    console.log(`[Providers] Initializing blockchain plugin: ${info.name}`);
+    registry.register(info.plugin);
+
+    registry
+      .activate(info.name)
+      .then(() => {
+        if (!isMounted) return;
+        setPluginInfo(info);
+        setIsReady(true);
+      })
+      .catch((error) => {
+        console.error(
+          `[Providers] Failed to activate blockchain plugin "${info.name}"`,
+          error,
+        );
+        if (!isMounted) return;
+        setPluginInfo(info);
+        setIsReady(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [tenant]);
 
   if (!isReady) {
     return (
-      <div className="p-10 text-center">Loading Mock Environment...</div>
+      <div className="p-10 text-center">
+        Loading {pluginName.charAt(0).toUpperCase() + pluginName.slice(1)} Environment...
+      </div>
     );
   }
 
-  const BlockchainProvider = mockPlugin.getProviderComponent();
+  // Get the pre-created provider component
+  const ProviderComponent = providerComponents[pluginInfo.name];
 
   return (
-    <BlockchainContextProvider plugin={mockPlugin}>
+    <BlockchainContextProvider plugin={pluginInfo.plugin}>
       <SupabaseProvider>
         <QueryClientProvider client={queryClient}>
-          <BlockchainProvider initialState={initialState}>
+          <ProviderComponent initialState={initialState}>
             <TimerProvider>{children}</TimerProvider>
-          </BlockchainProvider>
+          </ProviderComponent>
         </QueryClientProvider>
       </SupabaseProvider>
     </BlockchainContextProvider>

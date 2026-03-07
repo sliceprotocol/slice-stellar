@@ -1,4 +1,5 @@
 import { ReactNode } from "react";
+import type { DisputeUI } from "@/util/disputeAdapter";
 
 /**
  * Abstract blockchain account representation
@@ -19,6 +20,7 @@ export interface BlockchainBalance {
   balance: bigint;
   isLoading: boolean;
   error?: Error;
+  refetch?: () => Promise<void>;
 }
 
 /**
@@ -86,6 +88,84 @@ export interface RevealParams {
   salt: string;
 }
 
+export interface UseConnectHook {
+  connect: () => Promise<void> | void;
+  connectors: unknown[];
+}
+
+export interface UseVoteHook {
+  dispute: DisputeUI | null;
+  selectedVote: number | null;
+  hasCommittedLocally: boolean;
+  isRefreshing: boolean;
+  isProcessing: boolean;
+  isCommitDisabled: boolean;
+  isRevealDisabled: boolean;
+  handleVoteSelect: (vote: number) => void;
+  handleCommit: (...args: unknown[]) => Promise<boolean>;
+  handleRefresh: () => Promise<void>;
+}
+
+export interface RevealStatus {
+  isTooEarly: boolean;
+  isRevealOpen: boolean;
+  isFinished: boolean;
+}
+
+export interface UseRevealHook {
+  dispute: DisputeUI | null;
+  localVote: number | null;
+  hasLocalData: boolean;
+  status: RevealStatus;
+  revealVote: (...args: unknown[]) => Promise<boolean>;
+  isProcessing: boolean;
+  logs: string | string[];
+}
+
+export interface UseSliceVotingHook {
+  commitVote: (...args: unknown[]) => Promise<boolean>;
+  revealVote: (...args: unknown[]) => Promise<boolean>;
+  isProcessing: boolean;
+  logs: string | string[];
+}
+
+export interface JurorStatsData {
+  accuracy: string;
+  matches: string;
+  wins: string;
+  earnings: string;
+}
+
+export interface UseJurorStatsHook {
+  stats: JurorStatsData;
+  rank: string;
+}
+
+export interface UseDisputeQueryHook {
+  dispute: DisputeUI | null;
+  loading: boolean;
+  refetch: () => Promise<void>;
+}
+
+export interface UseDisputeListHook {
+  disputes: DisputeUI[];
+  isLoading: boolean;
+  refetch?: () => Promise<void>;
+}
+
+export interface UseUserProfileHook {
+  name: string;
+  avatar: string;
+  updateName: (name: string) => void;
+  updateAvatar: (avatar: string) => void;
+  availableAvatars: string[];
+}
+
+export interface UseStakingTokenHook {
+  symbol: string;
+  decimals: number;
+}
+
 /**
  * Hook interfaces for blockchain operations
  */
@@ -94,7 +174,7 @@ export interface BlockchainHooks {
   useAccount: () => BlockchainAccount;
   useBalance: () => BlockchainBalance;
   useContracts: () => BlockchainContracts;
-  useConnect: () => any;
+  useConnect: () => UseConnectHook;
   useSliceConnect: () => {
     connect: () => Promise<void> | void;
     disconnect: () => Promise<void> | void;
@@ -107,7 +187,7 @@ export interface BlockchainHooks {
     isCreating: boolean;
   };
   usePayDispute: () => {
-    payDispute: (disputeId: any) => Promise<boolean>;
+    payDispute: (disputeId: any, amount?: any) => Promise<boolean>;
     isPaying: boolean;
   };
   useExecuteRuling: () => {
@@ -147,20 +227,20 @@ export interface BlockchainHooks {
   };
   
   // Voting hooks
-  useVote: (disputeId?: any) => any;
-  useReveal: (disputeId?: any) => any;
-  useSliceVoting: () => any;
-  useJurorStats: (address?: string) => any;
+  useVote: (disputeId?: string | number) => UseVoteHook;
+  useReveal: (disputeId?: string | number) => UseRevealHook;
+  useSliceVoting: () => UseSliceVotingHook;
+  useJurorStats: (address?: string) => UseJurorStatsHook;
   
   // Dispute query hooks
-  useGetDispute: (disputeId: any) => any;
-  useDisputeList: () => any;
-  useMyDisputes: () => any;
-  useAllDisputes: () => any;
+  useGetDispute: (disputeId: string | number) => UseDisputeQueryHook;
+  useDisputeList: () => UseDisputeListHook;
+  useMyDisputes: () => UseDisputeListHook;
+  useAllDisputes: () => UseDisputeListHook;
   
   // User hooks
-  useUserProfile: (address?: string) => any;
-  useStakingToken: () => any;
+  useUserProfile: (address?: string) => UseUserProfileHook;
+  useStakingToken: () => UseStakingTokenHook;
   useTokenBalance: () => BlockchainBalance;
 }
 
