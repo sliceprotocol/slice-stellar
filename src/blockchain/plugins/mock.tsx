@@ -203,6 +203,21 @@ export const mockPlugin: BlockchainPlugin = {
         isReady: true,
       };
     },
+    useStake: () => {
+      const { execute, isLoading } = useMockAction("Stake");
+      return {
+        stake: execute,
+        unstake: execute,
+        isStaking: isLoading,
+        isUnstaking: isLoading,
+      };
+    },
+    useStakeInfo: () => ({
+      totalStaked: 1000n,
+      stakeInDisputes: 300n,
+      availableStake: 700n,
+      isLoading: false,
+    }),
     useVote: () => {
       const { execute, isLoading } = useMockAction("Vote");
       return {
