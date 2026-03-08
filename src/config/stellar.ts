@@ -61,7 +61,6 @@ export function getNetworkPassphrase(network: string): string {
   }
   return passphrase;
 }
-}
 
 /**
  * Check if the Stellar configuration is complete
