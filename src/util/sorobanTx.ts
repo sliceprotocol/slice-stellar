@@ -200,8 +200,8 @@ async function signWithFreighter(tx: Transaction): Promise<string | null> {
       throw new Error("Window is not available");
     }
 
-    const freighter = (window as any).freighter;
-    if (!freighter) {
+    const freighterApi = (window as any).freighterApi;
+    if (!freighterApi) {
       throw new Error("Freighter is not available");
     }
 
@@ -209,11 +209,17 @@ async function signWithFreighter(tx: Transaction): Promise<string | null> {
     const xdr = tx.toEnvelope().toXDR("base64");
 
     // Sign with Freighter
-    const response = await freighter.signTransaction(xdr, {
+    const response = await freighterApi.signTransaction(xdr, {
       networkPassphrase: getStellarNetworkPassphrase(),
     });
 
-    return response;
+    // Check for error in response
+    if (response.error) {
+      console.error("Freighter signing error:", response.error);
+      return null;
+    }
+
+    return response.signedTxXdr;
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     console.error("Freighter signing error:", err);
