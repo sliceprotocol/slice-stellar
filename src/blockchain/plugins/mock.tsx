@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type {
   BlockchainAccount,
   BlockchainPlugin,
   BlockchainBalance,
   BlockchainContracts,
+  UseDisputeQueryHook,
 } from "../types";
 
 const CONNECT_KEY = "slice_mock_connected";
@@ -16,6 +18,7 @@ const DEFAULT_PROFILE = {
   name: "Mock Juror",
   avatar: "/images/profiles-mockup/profile-1.jpg",
 };
+const TOKEN_BALANCE_QUERY_KEY = ["tokenBalance", "mock"] as const;
 
 const getStoredConnection = () => {
   if (typeof window === "undefined") return false;
@@ -29,28 +32,22 @@ const setStoredConnection = (value: boolean) => {
 };
 
 const useAccount = (): BlockchainAccount => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(() => getStoredConnection());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // Only handle storage events (sync across tabs) and auto-connect delay
     const storedValue = window.localStorage.getItem(CONNECT_KEY);
-    if (storedValue === "true") {
-      setIsConnected(true);
-      return;
+    if (storedValue === null) {
+      // Auto-connect for demo purposes if no stored value
+      const timer = window.setTimeout(() => {
+        setIsConnected(true);
+        setStoredConnection(true);
+      }, 500);
+
+      return () => window.clearTimeout(timer);
     }
-
-    if (storedValue === "false") {
-      setIsConnected(false);
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setIsConnected(true);
-      setStoredConnection(true);
-    }, 500);
-
-    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -69,14 +66,15 @@ const useAccount = (): BlockchainAccount => {
   };
 };
 
-const useGetDispute = (id: string) => {
+const useGetDispute = (id: string | number): UseDisputeQueryHook => {
   const now = Math.floor(Date.now() / 1000);
   const revealDeadline = now + 86400;
   const evidenceDeadline = now + 43200;
+  const disputeId = String(id);
 
   return {
     dispute: {
-      id,
+      id: disputeId,
       title: "Mock Dispute: Should we ship the mock stack?",
       category: "Engineering",
       status: 1,
@@ -97,6 +95,23 @@ const useGetDispute = (id: string) => {
     },
     loading: false,
     refetch: async () => {},
+  };
+};
+
+const useTokenBalance = (): BlockchainBalance => {
+  const query = useQuery({
+    queryKey: TOKEN_BALANCE_QUERY_KEY,
+    queryFn: async () => 500000000n,
+    initialData: 500000000n,
+  });
+
+  return {
+    balance: query.data ?? 0n,
+    isLoading: query.isLoading || query.isFetching,
+    error: query.error instanceof Error ? query.error : undefined,
+    refetch: async () => {
+      await query.refetch();
+    },
   };
 };
 
@@ -155,7 +170,7 @@ export const mockPlugin: BlockchainPlugin = {
       },
       isAuthenticated: true,
     }),
-    useTokenBalance: () => ({ balance: 500000000n, isLoading: false }),
+    useTokenBalance,
     useStakingToken: () => ({ symbol: "USDC", decimals: 6 }),
     useCreateDispute: () => {
       const { execute, isLoading } = useMockAction("Create Dispute");

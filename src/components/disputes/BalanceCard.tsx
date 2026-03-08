@@ -5,6 +5,7 @@ import { useAccount } from "@/blockchain/hooks";
 import { useRouter } from "next/navigation";
 import { RefreshCw, ArrowDownCircle, Send, QrCode } from "lucide-react";
 import { useTokenBalance } from "@/blockchain/hooks";
+import { useStakingToken } from "@/blockchain/hooks";
 import { SendModal } from "./SendModal";
 import { ReceiveModal } from "./ReceiveModal";
 import { FaucetButton } from "./FaucetButton";
@@ -12,7 +13,8 @@ import { FaucetButton } from "./FaucetButton";
 export const BalanceCard: React.FC = () => {
   const router = useRouter();
   const { address } = useAccount();
-  const { formatted, loading: isLoading, refetch } = useTokenBalance();
+  const { balance, isLoading, refetch } = useTokenBalance();
+  const { symbol: tokenSymbol, decimals } = useStakingToken();
 
   const [isSendOpen, setIsSendOpen] = useState(false);
   const [isReceiveOpen, setIsReceiveOpen] = useState(false);
@@ -20,16 +22,26 @@ export const BalanceCard: React.FC = () => {
   const displayBalance = useMemo(() => {
     if (isLoading) return "Loading...";
     if (!address) return "---";
-    if (formatted === undefined || formatted === null) return "N/A";
+    if (balance === undefined || balance === null) return "N/A";
 
-    const balance = parseFloat(formatted).toFixed(2);
-    return `${balance} USDC`;
-  }, [address, isLoading, formatted]);
+    const normalizedSymbol = tokenSymbol?.trim().toUpperCase() || "USDC";
+    const isNativeXlm = normalizedSymbol === "XLM" || decimals === 7;
+    const divisor = isNativeXlm ? 10_000_000 : 1_000_000;
+    const displaySymbol = isNativeXlm ? "XLM" : normalizedSymbol || "USDC";
+
+    const formatted = Number(balance) / divisor;
+    return `${formatted.toFixed(2)} ${displaySymbol}`;
+  }, [address, isLoading, balance, tokenSymbol, decimals]);
 
   const actionBtnClass =
     "flex flex-col items-center gap-1 bg-none border-none text-white cursor-pointer p-0 hover:opacity-80 transition-opacity group";
   const iconClass =
     "shrink-0 block w-[40px] h-[40px] group-hover:opacity-80 transition-opacity stroke-1";
+  const handleRefresh = async () => {
+    if (refetch) {
+      await refetch();
+    }
+  };
 
   return (
     <>
@@ -37,7 +49,7 @@ export const BalanceCard: React.FC = () => {
       <div className="relative bg-[#1b1c23] rounded-[21px] pt-6 px-6 pb-6 mt-12 mx-5 w-auto min-h-28 flex flex-row justify-between items-end text-white box-border">
         {/* Top Right Refresh Button */}
         <button
-          onClick={() => refetch()}
+          onClick={() => void handleRefresh()}
           className="absolute top-3 right-4 p-2 text-white/80 hover:text-white transition-colors"
           title="Refresh Balance"
         >
@@ -59,7 +71,7 @@ export const BalanceCard: React.FC = () => {
               {/* Conditional Retry Button (kept for fallback) */}
               {displayBalance === "N/A" && !isLoading && (
                 <button
-                  onClick={() => refetch()}
+                  onClick={() => void handleRefresh()}
                   className="p-1.5 hover:bg-white/10 rounded-full transition-colors group"
                   title="Retry fetch"
                 >

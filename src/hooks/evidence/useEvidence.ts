@@ -1,7 +1,37 @@
 import { useGetDispute } from "@/blockchain/hooks";
 import { isStellarAddress, shortenAddress } from "@/util/address";
+import type { DisputeUI } from "@/util/disputeAdapter";
 
 export type EvidenceRole = "claimant" | "defendant";
+
+type EvidenceImageUrl =
+  | NonNullable<DisputeUI["carouselEvidence"]>[number]
+  | NonNullable<DisputeUI["defenderCarouselEvidence"]>[number];
+
+type EvidenceAudioUrl =
+  | NonNullable<DisputeUI["audioEvidence"]>
+  | NonNullable<DisputeUI["defenderAudioEvidence"]>;
+
+export type ImageEvidence = {
+  id: string;
+  type: "image";
+  url: EvidenceImageUrl;
+  description: string;
+  uploadDate: string;
+};
+
+export type AudioEvidence = {
+  id: string;
+  title: string;
+  duration: string;
+  url: EvidenceAudioUrl;
+};
+
+export type CarouselImage = {
+  id: string;
+  url: EvidenceImageUrl;
+  description: string;
+};
 
 export function useEvidence(disputeId: string, role: EvidenceRole) {
   const { dispute } = useGetDispute(disputeId);
@@ -39,16 +69,16 @@ export function useEvidence(disputeId: string, role: EvidenceRole) {
 
   // 3. Evidence Routing
   // Switch sources based on role
-  const rawCarousel = isClaimant
+  const rawCarousel: EvidenceImageUrl[] = isClaimant
     ? dispute?.carouselEvidence || []
     : dispute?.defenderCarouselEvidence || []; // Use defender specific array
 
-  const rawAudio = isClaimant
-    ? dispute?.audioEvidence
-    : dispute?.defenderAudioEvidence; // Use defender specific audio
+  const rawAudio: EvidenceAudioUrl | null =
+    (isClaimant ? dispute?.audioEvidence : dispute?.defenderAudioEvidence) ??
+    null; // Use defender specific audio
 
   // Process Images
-  const imageEvidence = rawCarousel.map((url: string, i: number) => ({
+  const imageEvidence: ImageEvidence[] = rawCarousel.map((url, i: number) => ({
     id: `img-${i}`,
     type: "image" as const,
     url,
@@ -57,7 +87,7 @@ export function useEvidence(disputeId: string, role: EvidenceRole) {
   }));
 
   // Process Audio
-  const audioEvidence = rawAudio
+  const audioEvidence: AudioEvidence | null = rawAudio
     ? {
         id: `audio-${role}`,
         title: `${partyInfo.role}'s Statement`,
@@ -70,7 +100,7 @@ export function useEvidence(disputeId: string, role: EvidenceRole) {
   const videoEvidence: any[] = [];
 
   // Real Carousel (Added to match previous implementation structure if needed)
-  const carouselImages = rawCarousel.map((url: string, i: number) => ({
+  const carouselImages: CarouselImage[] = rawCarousel.map((url, i: number) => ({
     id: `slide-${i}`,
     url: url,
     description: `Evidence #${i + 1}`,

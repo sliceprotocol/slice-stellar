@@ -1,27 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { NetworkDebugger } from "./NetworkDebugger";
+import storage from "@/util/storage";
+
+// Helper to read localStorage value for SSR
+const getStoredDebugMode = (): boolean => {
+  if (typeof window === "undefined") return false;
+  return storage.getItem("slice_debug_mode", "safe") ?? false;
+};
 
 export const DebugToggle = () => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const saved = localStorage.getItem("slice_debug_mode") === "true";
-    setIsVisible(saved);
-  }, []);
+  // Use lazy initialization for isVisible to read from localStorage on client
+  const [isVisible, setIsVisible] = useState(getStoredDebugMode);
+  // Use useSyncExternalStore for SSR-safe client detection
+  const isClient = useSyncExternalStore(
+    () => () => {}, // noop subscribe
+    () => true, // client snapshot
+    () => false // server snapshot
+  );
 
   const toggle = () => {
     const next = !isVisible;
     setIsVisible(next);
-    localStorage.setItem("slice_debug_mode", String(next));
+    storage.setItem("slice_debug_mode", next);
     // Dispatch event for any other components listening
     window.dispatchEvent(new Event("debug-toggle"));
   };
 
-  if (!mounted) return null;
+  if (!isClient) return null;
 
   return (
     <>

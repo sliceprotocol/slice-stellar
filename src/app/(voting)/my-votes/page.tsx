@@ -17,6 +17,7 @@ import {
 import { useSliceConnect } from "@/blockchain/hooks";
 import { useAccount } from "@/blockchain/hooks";
 import { useMyDisputes } from "@/blockchain/hooks";
+import { DisputeUI } from "@/util/disputeAdapter";
 
 export default function MyVotesPage() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function MyVotesPage() {
   const { disputes, isLoading } = useMyDisputes();
 
   const tasks = disputes.filter(
-    (d) =>
+    (d: DisputeUI) =>
       d.phase === "VOTE" ||
       d.phase === "REVEAL" ||
       (d.phase === "WITHDRAW" && d.status === 2),
@@ -107,7 +108,7 @@ export default function MyVotesPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-5 pb-10">
-            {tasks.map((task, index) => (
+            {tasks.map((task: DisputeUI, index: number) => (
               <div
                 key={task.id}
                 onClick={() => handleAction(task)}

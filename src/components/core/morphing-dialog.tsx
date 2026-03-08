@@ -8,6 +8,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 import {
   motion,
@@ -144,10 +145,8 @@ function MorphingDialogContent({
 }: MorphingDialogContentProps) {
   const { setIsOpen, isOpen, uniqueId, triggerRef } = useMorphingDialog();
   const containerRef = useRef<HTMLDivElement>(null!);
-  const [firstFocusableElement, setFirstFocusableElement] =
-    useState<HTMLElement | null>(null);
-  const [lastFocusableElement, setLastFocusableElement] =
-    useState<HTMLElement | null>(null);
+  const firstFocusableElement = useRef<HTMLElement | null>(null);
+  const lastFocusableElement = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -155,17 +154,17 @@ function MorphingDialogContent({
         setIsOpen(false);
       }
       if (event.key === "Tab") {
-        if (!firstFocusableElement || !lastFocusableElement) return;
+        if (!firstFocusableElement.current || !lastFocusableElement.current) return;
 
         if (event.shiftKey) {
-          if (document.activeElement === firstFocusableElement) {
+          if (document.activeElement === firstFocusableElement.current) {
             event.preventDefault();
-            lastFocusableElement.focus();
+            lastFocusableElement.current.focus();
           }
         } else {
-          if (document.activeElement === lastFocusableElement) {
+          if (document.activeElement === lastFocusableElement.current) {
             event.preventDefault();
-            firstFocusableElement.focus();
+            firstFocusableElement.current.focus();
           }
         }
       }
@@ -176,7 +175,7 @@ function MorphingDialogContent({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [setIsOpen, firstFocusableElement, lastFocusableElement]);
+  }, [setIsOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -185,10 +184,10 @@ function MorphingDialogContent({
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
       );
       if (focusableElements && focusableElements.length > 0) {
-        setFirstFocusableElement(focusableElements[0] as HTMLElement);
-        setLastFocusableElement(
-          focusableElements[focusableElements.length - 1] as HTMLElement,
-        );
+        firstFocusableElement.current = focusableElements[0] as HTMLElement;
+        lastFocusableElement.current = focusableElements[
+          focusableElements.length - 1
+        ] as HTMLElement;
         (focusableElements[0] as HTMLElement).focus();
       }
     } else {
@@ -227,14 +226,14 @@ export type MorphingDialogContainerProps = {
 
 function MorphingDialogContainer({ children }: MorphingDialogContainerProps) {
   const { isOpen, uniqueId } = useMorphingDialog();
-  const [mounted, setMounted] = useState(false);
+  // Use useSyncExternalStore for SSR-safe client detection
+  const isClient = useSyncExternalStore(
+    () => () => {}, // noop subscribe
+    () => true, // client snapshot
+    () => false // server snapshot
+  );
 
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  if (!mounted) return null;
+  if (!isClient) return null;
 
   return createPortal(
     <AnimatePresence initial={false} mode="sync">

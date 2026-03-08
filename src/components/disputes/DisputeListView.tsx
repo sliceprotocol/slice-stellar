@@ -14,7 +14,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import type { Dispute } from "@/blockchain/hooks";
+import type { DisputeUI } from "@/util/disputeAdapter";
 
 // Categories matching your Create Dispute options
 const FILTER_CATEGORIES = [
@@ -25,7 +25,7 @@ const FILTER_CATEGORIES = [
 ];
 
 interface Props {
-  disputes: Dispute[];
+  disputes: DisputeUI[];
   isLoading: boolean;
   onEarnClick: () => void;
 }

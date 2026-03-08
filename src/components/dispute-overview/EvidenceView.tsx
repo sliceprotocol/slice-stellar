@@ -4,7 +4,7 @@ import React, { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { DisputeOverviewHeader } from "@/components/dispute-overview/DisputeOverviewHeader";
 import { PaginationDots } from "@/components/dispute-overview/PaginationDots";
-import { useEvidence, EvidenceRole } from "@/hooks/evidence/useEvidence";
+import { useEvidence, EvidenceRole, ImageEvidence } from "@/hooks/evidence/useEvidence";
 import { usePageSwipe } from "@/hooks/ui/usePageSwipe";
 import {
   Calendar,
@@ -237,7 +237,7 @@ export const EvidenceView: React.FC<EvidenceViewProps> = ({
               )}
 
               {/* 2. IMAGE EVIDENCE (Full Width) */}
-              {imageEvidence.map((img) => (
+              {imageEvidence.map((img: ImageEvidence) => (
                 <MorphingDialog
                   key={img.id}
                   transition={{

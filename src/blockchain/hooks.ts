@@ -5,6 +5,14 @@ import type {
   BlockchainAccount,
   BlockchainBalance,
   BlockchainContracts,
+  UseStakingTokenHook,
+  UseVoteHook,
+  UseRevealHook,
+  UseSliceVotingHook,
+  UseJurorStatsHook,
+  UseDisputeQueryHook,
+  UseDisputeListHook,
+  UseUserProfileHook,
 } from "./types";
 
 /**
@@ -48,7 +56,7 @@ export function useTokenBalance(): BlockchainBalance {
   return plugin.hooks.useTokenBalance();
 }
 
-export function useStakingToken() {
+export function useStakingToken(): UseStakingTokenHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useStakingToken();
 }
@@ -109,22 +117,22 @@ export function useFaucet() {
 // Voting Hooks
 // ===========================
 
-export function useVote(disputeId?: any) {
+export function useVote(disputeId?: string | number): UseVoteHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useVote(disputeId);
 }
 
-export function useReveal(disputeId?: any) {
+export function useReveal(disputeId?: string | number): UseRevealHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useReveal(disputeId);
 }
 
-export function useSliceVoting() {
+export function useSliceVoting(): UseSliceVotingHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useSliceVoting();
 }
 
-export function useJurorStats(address?: string) {
+export function useJurorStats(address?: string): UseJurorStatsHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useJurorStats(address);
 }
@@ -133,22 +141,22 @@ export function useJurorStats(address?: string) {
 // Dispute Query Hooks
 // ===========================
 
-export function useGetDispute(disputeId: any) {
+export function useGetDispute(disputeId: string | number): UseDisputeQueryHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useGetDispute(disputeId);
 }
 
-export function useDisputeList() {
+export function useDisputeList(): UseDisputeListHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useDisputeList();
 }
 
-export function useMyDisputes() {
+export function useMyDisputes(): UseDisputeListHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useMyDisputes();
 }
 
-export function useAllDisputes() {
+export function useAllDisputes(): UseDisputeListHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useAllDisputes();
 }
@@ -157,7 +165,7 @@ export function useAllDisputes() {
 // User Hooks
 // ===========================
 
-export function useUserProfile(address?: string) {
+export function useUserProfile(address?: string): UseUserProfileHook {
   const plugin = useActivePlugin();
   return plugin.hooks.useUserProfile(address);
 }

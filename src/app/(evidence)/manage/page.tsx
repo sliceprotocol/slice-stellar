@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/blockchain/hooks";
 import { useMyDisputes } from "@/blockchain/hooks";
@@ -25,7 +25,7 @@ export default function DisputeManagerPage() {
   const myCases = useMemo(() => {
     if (!address) return [];
     return disputes.filter(
-      (d) =>
+      (d: DisputeUI) =>
         d.claimer.toLowerCase() === address.toLowerCase() ||
         d.defender.toLowerCase() === address.toLowerCase(),
     );
@@ -83,7 +83,7 @@ export default function DisputeManagerPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {myCases.map((dispute) => (
+            {myCases.map((dispute: DisputeUI) => (
               <ManagerCaseCard
                 key={dispute.id}
                 dispute={dispute}
@@ -107,11 +107,16 @@ const ManagerCaseCard = ({
 }) => {
   const router = useRouter();
 
-  // FIX: Store 'now' in state to ensure purity during render
-  const [now, setNow] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    setNow(Date.now());
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
   }, []);
 
   // Determine Role
@@ -145,7 +150,6 @@ const ManagerCaseCard = ({
   // Assuming status 1 (Commit) allows evidence. Check your contract logic.
   // Usually evidence is allowed until 'evidenceDeadline'.
   else if (dispute.status === 1 || dispute.status === 2) {
-    // FIX: Use the state-based 'now' instead of calling Date.now() directly
     const canSubmit =
       now > 0 && now / 1000 < (dispute.evidenceDeadline || Infinity);
 
