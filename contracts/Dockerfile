@@ -8,7 +8,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 RUN rustup target add wasm32-unknown-unknown
-RUN cargo install --locked soroban-cli
+RUN cargo install --locked soroban-cli --version 23.1.0
 
 WORKDIR /workspace/contracts
 COPY slice ./slice
