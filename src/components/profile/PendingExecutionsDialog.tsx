@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { useMyDisputes } from "@/blockchain/hooks";
 import { Button } from "@/components/ui/button";
+import type { DisputeUI } from "@/util/disputeAdapter";
 
 export const PendingExecutionsDialog = () => {
   const router = useRouter();
@@ -21,7 +22,7 @@ export const PendingExecutionsDialog = () => {
   // Dispute is in 'WITHDRAW' phase (Status 2 + Time Passed)
   // This means the case is decided but needs someone to click "Execute" to payout.
   const pendingExecutions = useMemo(() => {
-    return disputes.filter((d) => d.phase === "WITHDRAW");
+    return disputes.filter((d: DisputeUI) => d.phase === "WITHDRAW");
   }, [disputes]);
 
   if (isLoading) return null;
@@ -64,7 +65,7 @@ export const PendingExecutionsDialog = () => {
           </DialogHeader>
 
           <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-            {pendingExecutions.map((dispute) => (
+            {pendingExecutions.map((dispute: DisputeUI) => (
               <button
                 key={dispute.id}
                 onClick={() => router.push(`/execute-ruling/${dispute.id}`)}

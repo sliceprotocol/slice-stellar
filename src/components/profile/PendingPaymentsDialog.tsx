@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useMyDisputes } from "@/blockchain/hooks";
+import type { DisputeUI } from "@/util/disputeAdapter";
 import { Button } from "@/components/ui/button";
 
 export const PendingPaymentsDialog = () => {
@@ -26,7 +27,7 @@ export const PendingPaymentsDialog = () => {
   const pendingDisputes = useMemo(() => {
     if (!address) return [];
 
-    return disputes.filter((d) => {
+    return disputes.filter((d: DisputeUI) => {
       // Must be in Created status (waiting for funds)
       if (d.status !== 0) return false;
 
@@ -80,7 +81,7 @@ export const PendingPaymentsDialog = () => {
           </DialogHeader>
 
           <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-            {pendingDisputes.map((dispute) => (
+            {pendingDisputes.map((dispute: DisputeUI) => (
               <button
                 key={dispute.id}
                 onClick={() => router.push(`/pay/${dispute.id}`)}

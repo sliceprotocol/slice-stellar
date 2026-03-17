@@ -25,7 +25,7 @@ export default function DisputeManagerPage() {
   const myCases = useMemo(() => {
     if (!address) return [];
     return disputes.filter(
-      (d) =>
+      (d: any) =>
         d.claimer.toLowerCase() === address.toLowerCase() ||
         d.defender.toLowerCase() === address.toLowerCase(),
     );
@@ -83,7 +83,7 @@ export default function DisputeManagerPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {myCases.map((dispute) => (
+            {myCases.map((dispute: any) => (
               <ManagerCaseCard
                 key={dispute.id}
                 dispute={dispute}

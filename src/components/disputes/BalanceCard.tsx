@@ -12,7 +12,7 @@ import { FaucetButton } from "./FaucetButton";
 export const BalanceCard: React.FC = () => {
   const router = useRouter();
   const { address } = useAccount();
-  const { formatted, loading: isLoading, refetch } = useTokenBalance();
+  const { balance, isLoading } = useTokenBalance();
 
   const [isSendOpen, setIsSendOpen] = useState(false);
   const [isReceiveOpen, setIsReceiveOpen] = useState(false);
@@ -20,11 +20,12 @@ export const BalanceCard: React.FC = () => {
   const displayBalance = useMemo(() => {
     if (isLoading) return "Loading...";
     if (!address) return "---";
-    if (formatted === undefined || formatted === null) return "N/A";
+    if (balance === undefined || balance === null) return "N/A";
 
-    const balance = parseFloat(formatted).toFixed(2);
-    return `${balance} USDC`;
-  }, [address, isLoading, formatted]);
+    // Convert from smallest unit (assuming 6 decimals for USDC)
+    const balanceNum = Number(balance) / 1_000_000;
+    return balanceNum.toFixed(2);
+  }, [address, isLoading, balance]);
 
   const actionBtnClass =
     "flex flex-col items-center gap-1 bg-none border-none text-white cursor-pointer p-0 hover:opacity-80 transition-opacity group";
@@ -37,7 +38,7 @@ export const BalanceCard: React.FC = () => {
       <div className="relative bg-[#1b1c23] rounded-[21px] pt-6 px-6 pb-6 mt-12 mx-5 w-auto min-h-28 flex flex-row justify-between items-end text-white box-border">
         {/* Top Right Refresh Button */}
         <button
-          onClick={() => refetch()}
+          onClick={() => window.location.reload()}
           className="absolute top-3 right-4 p-2 text-white/80 hover:text-white transition-colors"
           title="Refresh Balance"
         >
@@ -59,7 +60,7 @@ export const BalanceCard: React.FC = () => {
               {/* Conditional Retry Button (kept for fallback) */}
               {displayBalance === "N/A" && !isLoading && (
                 <button
-                  onClick={() => refetch()}
+                  onClick={() => window.location.reload()}
                   className="p-1.5 hover:bg-white/10 rounded-full transition-colors group"
                   title="Retry fetch"
                 >
