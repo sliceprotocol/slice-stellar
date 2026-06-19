@@ -1,7 +1,7 @@
 use crate::error::ContractError;
 use crate::types::{
     Categories, Config, ConfigV1, Dispute, CATEGORIES_KEY, CONFIG_KEY, CONFIG_VERSION_KEY,
-    CONFIG_VERSION_V1, CONFIG_VERSION_V2, DISPUTE_COUNTER_KEY,
+    CONFIG_VERSION_V1, CONFIG_VERSION_V2, DISPUTE_COUNTER_KEY, DRAFT_QUEUE_KEY,
 };
 use soroban_sdk::{symbol_short, Address, BytesN, Env, Symbol, Vec};
 
@@ -30,13 +30,11 @@ pub fn get_config(env: &Env) -> Result<Config, ContractError> {
             .get(CONFIG_KEY)
             .ok_or(ContractError::ErrConfigMissing)
     } else {
-        // V1 config exists but hasn't been migrated - require explicit migration
         Err(ContractError::ErrConfigMigrationRequired)
     }
 }
 
 /// Migrate config from V1 to V2 by providing the token address.
-/// This must be called by the admin after upgrading from a pre-token contract.
 pub fn migrate_config(env: &Env, token: Address) -> Result<(), ContractError> {
     let version = get_config_version(env);
 
@@ -44,14 +42,12 @@ pub fn migrate_config(env: &Env, token: Address) -> Result<(), ContractError> {
         return Err(ContractError::ErrAlreadyMigrated);
     }
 
-    // Read old config format
     let old_config: ConfigV1 = env
         .storage()
         .instance()
         .get(CONFIG_KEY)
         .ok_or(ContractError::ErrConfigMissing)?;
 
-    // Create new config with token
     let new_config = Config {
         admin: old_config.admin,
         token,
@@ -63,7 +59,6 @@ pub fn migrate_config(env: &Env, token: Address) -> Result<(), ContractError> {
         max_reveal_seconds: old_config.max_reveal_seconds,
     };
 
-    // Write new config and update version atomically
     env.storage().instance().set(CONFIG_KEY, &new_config);
     set_config_version(env, CONFIG_VERSION_V2);
 
@@ -158,4 +153,40 @@ pub fn set_stake_in_disputes(env: &Env, addr: &Address, amount: i128) {
     env.storage()
         .persistent()
         .set(&(symbol_short!("LOCK"), addr), &amount);
+}
+
+pub fn set_draft_queue(env: &Env, queue: &Vec<u64>) {
+    env.storage().instance().set(DRAFT_QUEUE_KEY, queue);
+}
+
+pub fn get_draft_queue(env: &Env) -> Vec<u64> {
+    env.storage()
+        .instance()
+        .get(DRAFT_QUEUE_KEY)
+        .unwrap_or(Vec::new(env))
+}
+
+pub fn add_dispute_to_queue(env: &Env, dispute_id: u64) {
+    let mut queue = get_draft_queue(env);
+    if !queue.contains(&dispute_id) {
+        queue.push_back(dispute_id);
+        set_draft_queue(env, &queue);
+    }
+}
+
+pub fn remove_dispute_from_queue(env: &Env, dispute_id: u64) -> bool {
+    let mut queue = get_draft_queue(env);
+
+    let Some(index) = queue.iter().position(|id| id == dispute_id) else {
+        return false;
+    };
+
+    let last_index = queue.len() - 1;
+    if index as u32 != last_index {
+        let last_value = queue.get(last_index).expect("queue last index must exist");
+        queue.set(index as u32, last_value);
+    }
+    queue.pop_back();
+    set_draft_queue(env, &queue);
+    true
 }
