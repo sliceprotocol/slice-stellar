@@ -1,6 +1,6 @@
 use crate::error::ContractError;
 use crate::types::{
-    Categories, Config, ConfigV1, Dispute, CATEGORIES_KEY, CONFIG_KEY, CONFIG_VERSION_KEY,
+    Categories, Config, ConfigV1, DataKey, Dispute, CATEGORIES_KEY, CONFIG_KEY, CONFIG_VERSION_KEY,
     CONFIG_VERSION_V1, CONFIG_VERSION_V2, DISPUTE_COUNTER_KEY, DRAFT_QUEUE_KEY,
 };
 use soroban_sdk::{symbol_short, Address, BytesN, Env, Symbol, Vec};
@@ -189,4 +189,25 @@ pub fn remove_dispute_from_queue(env: &Env, dispute_id: u64) -> bool {
     queue.pop_back();
     set_draft_queue(env, &queue);
     true
+}
+
+pub fn get_balance(env: &Env, user: &Address) -> i128 {
+    env.storage()
+        .instance()
+        .get(&DataKey::Balance(user.clone()))
+        .unwrap_or(0i128)
+}
+
+pub fn set_balance(env: &Env, user: &Address, amount: i128) {
+    env.storage()
+        .instance()
+        .set(&DataKey::Balance(user.clone()), &amount);
+}
+
+pub fn add_balance(env: &Env, user: &Address, amount: i128) {
+    if amount <= 0 {
+        return;
+    }
+    let current = get_balance(env, user);
+    set_balance(env, user, current + amount);
 }

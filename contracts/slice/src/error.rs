@@ -33,4 +33,6 @@ pub enum ContractError {
     ErrConfigMigrationRequired = 29,
     ErrAlreadyMigrated = 30,
     ErrInsufficientStake = 31,
+    ErrEvidenceClosed = 32,
+    ErrNoClaimableBalance = 33,
 }

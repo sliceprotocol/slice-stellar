@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount } from "@/blockchain/hooks";
 import { useMyDisputes } from "@/blockchain/hooks";
@@ -14,7 +14,7 @@ import {
   Briefcase,
   UploadCloud,
 } from "lucide-react";
-import { DisputeUI } from "@/util/disputeAdapter";
+import type { Dispute } from "@/blockchain/hooks";
 
 export default function DisputeManagerPage() {
   const router = useRouter();
@@ -102,17 +102,12 @@ const ManagerCaseCard = ({
   dispute,
   address,
 }: {
-  dispute: DisputeUI;
+  dispute: Dispute;
   address?: string;
 }) => {
   const router = useRouter();
 
-  // FIX: Store 'now' in state to ensure purity during render
-  const [now, setNow] = useState(0);
-
-  useEffect(() => {
-    setNow(Date.now());
-  }, []);
+  const [now] = useState(() => Date.now());
 
   // Determine Role
   const isClaimer = dispute.claimer.toLowerCase() === address?.toLowerCase();
@@ -145,9 +140,7 @@ const ManagerCaseCard = ({
   // Assuming status 1 (Commit) allows evidence. Check your contract logic.
   // Usually evidence is allowed until 'evidenceDeadline'.
   else if (dispute.status === 1 || dispute.status === 2) {
-    // FIX: Use the state-based 'now' instead of calling Date.now() directly
-    const canSubmit =
-      now > 0 && now / 1000 < (dispute.evidenceDeadline || Infinity);
+    const canSubmit = now / 1000 < (dispute.evidenceDeadline || Infinity);
 
     if (canSubmit) {
       ActionBtn = (

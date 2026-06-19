@@ -5,7 +5,10 @@ import type {
   BlockchainAccount,
   BlockchainBalance,
   BlockchainContracts,
+  Dispute,
 } from "./types";
+
+export type { Dispute };
 
 /**
  * Proxy hooks that delegate to the active blockchain plugin
@@ -138,9 +141,9 @@ export function useGetDispute(disputeId: any) {
   return plugin.hooks.useGetDispute(disputeId);
 }
 
-export function useDisputeList() {
+export function useDisputeList(role?: string) {
   const plugin = useActivePlugin();
-  return plugin.hooks.useDisputeList();
+  return plugin.hooks.useDisputeList(role);
 }
 
 export function useMyDisputes() {

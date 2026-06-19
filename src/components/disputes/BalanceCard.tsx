@@ -12,7 +12,15 @@ import { FaucetButton } from "./FaucetButton";
 export const BalanceCard: React.FC = () => {
   const router = useRouter();
   const { address } = useAccount();
-  const { formatted, loading: isLoading, refetch } = useTokenBalance();
+  const {
+    balance,
+    formatted,
+    loading: rawLoading,
+    isLoading: rawIsLoading,
+    refetch: rawRefetch,
+  } = useTokenBalance();
+  const isLoading = rawLoading ?? rawIsLoading ?? false;
+  const refetch = rawRefetch ?? (() => {});
 
   const [isSendOpen, setIsSendOpen] = useState(false);
   const [isReceiveOpen, setIsReceiveOpen] = useState(false);
@@ -20,11 +28,11 @@ export const BalanceCard: React.FC = () => {
   const displayBalance = useMemo(() => {
     if (isLoading) return "Loading...";
     if (!address) return "---";
-    if (formatted === undefined || formatted === null) return "N/A";
-
-    const balance = parseFloat(formatted).toFixed(2);
-    return `${balance} USDC`;
-  }, [address, isLoading, formatted]);
+    if (formatted !== undefined && formatted !== null) {
+      return `${parseFloat(formatted).toFixed(2)} USDC`;
+    }
+    return `${(Number(balance) / 1_000_000).toFixed(2)} USDC`;
+  }, [address, isLoading, formatted, balance]);
 
   const actionBtnClass =
     "flex flex-col items-center gap-1 bg-none border-none text-white cursor-pointer p-0 hover:opacity-80 transition-opacity group";
