@@ -117,7 +117,7 @@ const useWithdraw = () => {
     try {
       // Transaction submission/signing must be handled by the wallet integration layer.
       // We still refresh claimable state from chain so UI reflects real data.
-      toast.info("Withdraw submission is not wired yet for this plugin.");
+      toast.error("Withdrawal not yet available — coming soon.");
       await refreshClaimable();
       return false;
     } finally {

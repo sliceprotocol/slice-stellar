@@ -26,7 +26,7 @@ export const PendingPaymentsDialog = () => {
   const pendingDisputes = useMemo(() => {
     if (!address) return [];
 
-    return disputes.filter((d) => {
+    return disputes.filter((d: any) => {
       // Must be in Created status (waiting for funds)
       if (d.status !== 0) return false;
 
@@ -80,7 +80,7 @@ export const PendingPaymentsDialog = () => {
           </DialogHeader>
 
           <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-            {pendingDisputes.map((dispute) => (
+            {pendingDisputes.map((dispute: any) => (
               <button
                 key={dispute.id}
                 onClick={() => router.push(`/pay/${dispute.id}`)}

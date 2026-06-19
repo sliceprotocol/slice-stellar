@@ -11,8 +11,9 @@ import {
   Keypair,
   SorobanDataBuilder,
   BASE_FEE,
-  Server,
+  Horizon,
 } from "@stellar/stellar-sdk";
+import { Server as SorobanServer } from "@stellar/stellar-sdk/rpc";
 import {
   getStellarNetworkPassphrase,
   getSorobanRpcUrl,
@@ -59,10 +60,10 @@ export async function buildAndSubmitTx(
     const baseFeeStr = getBaseFee();
 
     // 2. Initialize Server
-    const server = new Server(sorobanRpcUrl);
+    const server = new SorobanServer(sorobanRpcUrl);
 
     // 3. Load account from Horizon
-    const horizonServer = new Server(horizonUrl);
+    const horizonServer = new Horizon.Server(horizonUrl);
     const account = await horizonServer.loadAccount(signerAddress);
 
     // 4. Build transaction with TransactionBuilder
@@ -98,30 +99,8 @@ export async function buildAndSubmitTx(
       };
     }
 
-    // 9. Check for simulation errors
-    if (simResponse.error) {
-      return {
-        success: false,
-        error: `Simulation error: ${simResponse.error}`,
-      };
-    }
-
-    // 10. Prepare transaction with Soroban RPC
-    const preparedTransaction = await server.prepareTransaction(tx);
-
-    if ("error" in preparedTransaction) {
-      console.error("Prepare error:", preparedTransaction.error);
-      return {
-        success: false,
-        error: `Prepare failed: ${preparedTransaction.error}`,
-      };
-    }
-
-    // 11. Create the classic transaction from prepared response
-    const preparedTx = new Transaction(
-      preparedTransaction.transaction,
-      networkPassphrase
-    );
+    // 10. Prepare transaction with Soroban RPC (throws on error)
+    const preparedTx = await server.prepareTransaction(tx) as Transaction;
 
     // 12. Sign with Freighter
     const signedXDR = await signWithFreighter(preparedTx);

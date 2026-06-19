@@ -21,7 +21,7 @@ export const PendingExecutionsDialog = () => {
   // Dispute is in 'WITHDRAW' phase (Status 2 + Time Passed)
   // This means the case is decided but needs someone to click "Execute" to payout.
   const pendingExecutions = useMemo(() => {
-    return disputes.filter((d) => d.phase === "WITHDRAW");
+    return disputes.filter((d: any) => d.phase === "WITHDRAW");
   }, [disputes]);
 
   if (isLoading) return null;
@@ -64,7 +64,7 @@ export const PendingExecutionsDialog = () => {
           </DialogHeader>
 
           <div className="flex flex-col gap-3 max-h-[60vh] overflow-y-auto pr-1">
-            {pendingExecutions.map((dispute) => (
+            {pendingExecutions.map((dispute: any) => (
               <button
                 key={dispute.id}
                 onClick={() => router.push(`/execute-ruling/${dispute.id}`)}

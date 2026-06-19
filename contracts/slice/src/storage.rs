@@ -155,6 +155,7 @@ pub fn set_stake_in_disputes(env: &Env, addr: &Address, amount: i128) {
         .set(&(symbol_short!("LOCK"), addr), &amount);
 }
 
+// TODO: migrate queue to persistent storage once dispute volume warrants it
 pub fn set_draft_queue(env: &Env, queue: &Vec<u64>) {
     env.storage().instance().set(DRAFT_QUEUE_KEY, queue);
 }
