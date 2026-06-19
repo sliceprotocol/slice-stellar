@@ -43,7 +43,7 @@ export const DisputeListView: React.FC<Props> = ({
   // Filter Logic
   const filteredDisputes = useMemo(() => {
     return disputes.filter((d) => {
-      const matchesTab = activeTab === "active" ? d.status < 3 : d.status === 3;
+      const matchesTab = activeTab === "active" ? Number(d.status) < 3 : Number(d.status) === 3;
 
       // Robust matching: Check if the dispute category includes the selected filter value
       const matchesCategory = selectedCategory

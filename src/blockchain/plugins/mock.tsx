@@ -125,6 +125,7 @@ export const mockPlugin: BlockchainPlugin = {
     useBalance: (): BlockchainBalance => ({
       balance: 1000000000n,
       isLoading: false,
+      refetch: () => {},
     }),
     useContracts: (): BlockchainContracts => ({
       sliceContract: "C_MOCK",
@@ -149,7 +150,7 @@ export const mockPlugin: BlockchainPlugin = {
       },
       isAuthenticated: true,
     }),
-    useTokenBalance: () => ({ balance: 500000000n, isLoading: false }),
+    useTokenBalance: () => ({ balance: 500000000n, isLoading: false, refetch: () => {} }),
     useStakingToken: () => ({ symbol: "USDC", decimals: 6 }),
     useCreateDispute: () => {
       const { execute, isLoading } = useMockAction("Create Dispute");
@@ -197,6 +198,13 @@ export const mockPlugin: BlockchainPlugin = {
         isReady: true,
       };
     },
+    useSubmitEvidence: () => ({
+      submitEvidence: async (_disputeId: any, _metaHash: string) => {
+        toast.success("Evidence submitted (mock)");
+        return true;
+      },
+      isSubmitting: false,
+    }),
     useStake: () => {
       const { execute: stakeExecute, isLoading: isStaking } = useMockAction("Stake");
       const { execute: unstakeExecute, isLoading: isUnstaking } = useMockAction("Unstake");

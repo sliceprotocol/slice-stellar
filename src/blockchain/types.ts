@@ -18,10 +18,8 @@ export interface BlockchainAccount {
 export interface BlockchainBalance {
   balance: bigint;
   isLoading: boolean;
-  formatted?: string;
-  loading?: boolean;
-  refetch?: () => Promise<void> | void;
   error?: Error;
+  refetch?: () => void;
 }
 
 /**
@@ -71,37 +69,30 @@ export interface DisputeData {
   // Add more fields as needed
 }
 
+/**
+ * Dispute (re-exported for convenience)
+ */
 export interface Dispute {
-  id: string | number;
-  title: string;
+  id: string | bigint;
+  title?: string;
   category: string;
-  status: number;
-  phase: "VOTE" | "REVEAL" | "WITHDRAW" | "CLOSED" | string;
-  deadlineLabel: string;
-  isUrgent: boolean;
-  stake: string;
-  jurorsRequired: number;
-  revealDeadline?: number;
-  evidenceDeadline?: number;
-  description?: string;
-  evidence?: string[];
+  status: number | string;
+  phase?: string;
   claimer: string;
   defender: string;
-  winner?: string;
+  stake?: string;
+  jurorsRequired?: number;
+  revealDeadline?: number;
+  evidenceDeadline?: number;
   claimerPaid?: boolean;
   defenderPaid?: boolean;
+  evidence?: string[];
+  description?: string;
+  isUrgent?: boolean;
+  deadlineLabel?: string;
+  ruling?: number;
   claimerName?: string;
   defenderName?: string;
-  audioEvidence?: string | null;
-  carouselEvidence?: string[];
-  defenderDescription?: string;
-  defenderAudioEvidence?: string | null;
-  defenderCarouselEvidence?: string[];
-  votesCount?: number;
-  totalVotes?: number;
-  prize?: string;
-  icon?: string;
-  voters?: Array<{ isMe: boolean; vote: number }>;
 }
 
 /**
@@ -136,14 +127,14 @@ export interface BlockchainHooks {
     disconnect: () => Promise<void> | void;
     isAuthenticated: boolean;
   };
-  
+
   // Action hooks
   useCreateDispute: () => {
     createDispute: (...args: any[]) => Promise<boolean>;
     isCreating: boolean;
   };
   usePayDispute: () => {
-    payDispute: (disputeId: any, amount?: string | number) => Promise<boolean>;
+    payDispute: (disputeId: any, amount?: any) => Promise<boolean>;
     isPaying: boolean;
   };
   useExecuteRuling: () => {
@@ -180,27 +171,24 @@ export interface BlockchainHooks {
   useFaucet?: () => {
     requestTokens: () => Promise<boolean>;
     isRequesting: boolean;
-    mint?: () => Promise<boolean>;
-    isPending?: boolean;
-    isReady?: boolean;
   };
-  
+  useSubmitEvidence?: () => {
+    submitEvidence: (disputeId: any, metaHash: string) => Promise<boolean>;
+    isSubmitting: boolean;
+  };
+
   // Voting hooks
   useVote: (disputeId?: any) => any;
   useReveal: (disputeId?: any) => any;
   useSliceVoting: () => any;
   useJurorStats: (address?: string) => any;
-  
+
   // Dispute query hooks
-  useGetDispute: (disputeId: any) => {
-    dispute: Dispute | null;
-    loading: boolean;
-    refetch: () => Promise<void> | void;
-  };
-  useDisputeList: (role?: string) => { disputes: Dispute[]; isLoading: boolean };
-  useMyDisputes: () => { disputes: Dispute[]; isLoading: boolean };
-  useAllDisputes: () => { disputes: Dispute[]; isLoading: boolean };
-  
+  useGetDispute: (disputeId: any) => any;
+  useDisputeList: (filter?: string) => any;
+  useMyDisputes: () => any;
+  useAllDisputes: () => any;
+
   // User hooks
   useUserProfile: (address?: string) => any;
   useStakingToken: () => any;
@@ -220,22 +208,22 @@ export interface BlockchainProviderProps {
  */
 export interface BlockchainPlugin {
   name: string;
-  
+
   /**
    * Initialize the plugin (setup, config loading, etc.)
    */
   initialize: () => Promise<void>;
-  
+
   /**
    * Get the provider component for this blockchain
    */
   getProviderComponent: () => React.ComponentType<BlockchainProviderProps>;
-  
+
   /**
    * All hooks exposed by this plugin
    */
   hooks: BlockchainHooks;
-  
+
   /**
    * Optional: get configuration specific to this blockchain
    */

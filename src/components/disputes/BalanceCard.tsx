@@ -12,15 +12,8 @@ import { FaucetButton } from "./FaucetButton";
 export const BalanceCard: React.FC = () => {
   const router = useRouter();
   const { address } = useAccount();
-  const {
-    balance,
-    formatted,
-    loading: rawLoading,
-    isLoading: rawIsLoading,
-    refetch: rawRefetch,
-  } = useTokenBalance();
-  const isLoading = rawLoading ?? rawIsLoading ?? false;
-  const refetch = rawRefetch ?? (() => {});
+  const { balance, isLoading, refetch } = useTokenBalance();
+  const formatted = balance !== undefined ? (Number(balance) / 1_000_000).toFixed(2) : undefined;
 
   const [isSendOpen, setIsSendOpen] = useState(false);
   const [isReceiveOpen, setIsReceiveOpen] = useState(false);
@@ -28,11 +21,11 @@ export const BalanceCard: React.FC = () => {
   const displayBalance = useMemo(() => {
     if (isLoading) return "Loading...";
     if (!address) return "---";
-    if (formatted !== undefined && formatted !== null) {
-      return `${parseFloat(formatted).toFixed(2)} USDC`;
-    }
-    return `${(Number(balance) / 1_000_000).toFixed(2)} USDC`;
-  }, [address, isLoading, formatted, balance]);
+    if (formatted === undefined || formatted === null) return "N/A";
+
+    const balance = parseFloat(formatted).toFixed(2);
+    return `${balance} USDC`;
+  }, [address, isLoading, formatted]);
 
   const actionBtnClass =
     "flex flex-col items-center gap-1 bg-none border-none text-white cursor-pointer p-0 hover:opacity-80 transition-opacity group";
@@ -45,7 +38,7 @@ export const BalanceCard: React.FC = () => {
       <div className="relative bg-[#1b1c23] rounded-[21px] pt-6 px-6 pb-6 mt-12 mx-5 w-auto min-h-28 flex flex-row justify-between items-end text-white box-border">
         {/* Top Right Refresh Button */}
         <button
-          onClick={() => refetch()}
+          onClick={() => refetch?.()}
           className="absolute top-3 right-4 p-2 text-white/80 hover:text-white transition-colors"
           title="Refresh Balance"
         >
@@ -67,7 +60,7 @@ export const BalanceCard: React.FC = () => {
               {/* Conditional Retry Button (kept for fallback) */}
               {displayBalance === "N/A" && !isLoading && (
                 <button
-                  onClick={() => refetch()}
+                  onClick={() => refetch?.()}
                   className="p-1.5 hover:bg-white/10 rounded-full transition-colors group"
                   title="Retry fetch"
                 >

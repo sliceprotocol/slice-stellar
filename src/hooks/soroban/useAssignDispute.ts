@@ -23,12 +23,13 @@ export function useAssignDispute(): UseAssignDisputeReturn {
       try {
         // Use the plugin's useAssignDispute hook
         const pluginHook = plugin.hooks.useAssignDispute?.();
-        if (!pluginHook || !pluginHook.assignDispute) {
+        if (!pluginHook || !pluginHook.drawDispute) {
           toast.error("Assign dispute not supported by active blockchain plugin");
           return false;
         }
 
-        return await pluginHook.assignDispute(category, stakeAmount);
+        const result = await pluginHook.drawDispute(stakeAmount);
+        return result !== null;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);

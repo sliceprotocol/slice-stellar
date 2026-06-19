@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     // After successful passkey verification, generate an auth token using Admin API
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!serviceRoleKey) {
       console.error("SUPABASE_SERVICE_ROLE_KEY not configured");
       return NextResponse.json(
@@ -75,10 +75,11 @@ export async function POST(request: NextRequest) {
       },
     );
 
-    // Generate a magic link which provides a hashed token for verifyOtp.
+    // Generate a recovery/signup link which gives us a valid token hash
+    // We use 'signup' type which provides a token that can be used immediately
     const { data: linkData, error: linkError } =
       await adminClient.auth.admin.generateLink({
-        type: "magiclink",
+        type: 'magiclink',
         email: passkey.email,
       });
 
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
     // Extract the hashed token from the properties
     // This token can be exchanged for a session
     const tokenHash = linkData.properties.hashed_token;
-    
+
     if (!tokenHash) {
       console.error("No hashed token in response");
       return NextResponse.json(
@@ -108,7 +109,7 @@ export async function POST(request: NextRequest) {
       userId,
       email: passkey.email,
       tokenHash,
-      tokenType: "magiclink",
+      tokenType: 'signup',
     });
   } catch (error: any) {
     console.error("Error in passkey authentication:", error);

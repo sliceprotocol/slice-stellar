@@ -12,7 +12,7 @@ export type { Dispute };
 
 /**
  * Proxy hooks that delegate to the active blockchain plugin
- * 
+ *
  * These hooks provide a blockchain-agnostic interface for the UI layer.
  * The actual implementation is provided by the active plugin.
  */
@@ -108,6 +108,11 @@ export function useFaucet() {
   return plugin.hooks.useFaucet();
 }
 
+export function useSubmitEvidence() {
+  const plugin = useActivePlugin();
+  return plugin.hooks.useSubmitEvidence?.() ?? { submitEvidence: async () => false, isSubmitting: false };
+}
+
 // ===========================
 // Voting Hooks
 // ===========================
@@ -141,9 +146,9 @@ export function useGetDispute(disputeId: any) {
   return plugin.hooks.useGetDispute(disputeId);
 }
 
-export function useDisputeList(role?: string) {
+export function useDisputeList(filter?: string) {
   const plugin = useActivePlugin();
-  return plugin.hooks.useDisputeList(role);
+  return plugin.hooks.useDisputeList(filter);
 }
 
 export function useMyDisputes() {

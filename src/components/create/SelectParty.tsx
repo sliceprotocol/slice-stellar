@@ -193,7 +193,7 @@ export const SelectParty: React.FC<Props> = ({
                       placeholder="Search alias or paste G..."
                       value={searchTerm}
                       onChange={(e) => {
-                        // Only update raw input here 
+                        // Only update raw input here
                         setSearchTerm(e.target.value);
                         setAddressError(null);
                       }}
