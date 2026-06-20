@@ -2,10 +2,20 @@
 
 **URL del producto**: [link]  
 **Perfil SCF**: [link si aplica]  
-**Contacto**: [Nombre y rol, si lo dieron]  
-**Canal usado**: [X / Telegram / LinkedIn / Formulario / Discord]  
-**Fecha**: [DD/MM/YYYY]  
+**Fecha de contacto**: [DD/MM/YYYY]  
+**Fecha de respuesta**: [DD/MM/YYYY — o "Sin respuesta"]  
+**Canal usado**: [X / Telegram / LinkedIn / Discord / Formulario]  
+**Idioma de la comunicación**: [Español / Inglés / Otro]  
 **Issue relacionada**: #[número]
+
+---
+
+## Datos para seguimiento
+
+> Este bloque es obligatorio. Sin él, no se puede cerrar la issue.
+
+**Telegram del contribuidor (vos)**: @[tu_usuario]  
+**Contacto de la persona del producto**: [Nombre, rol, @handle o email si lo compartieron]
 
 ---
 
@@ -15,7 +25,7 @@
 
 ---
 
-## Por qué lo elegí como candidato para Justly
+## Por qué es candidato para Justly
 
 [Qué criterios cumple — por qué tiene riesgo de disputas entre usuarios]
 
@@ -23,54 +33,69 @@
 
 ## Respuestas
 
-### Pregunta 1 — ¿Qué pasa cuando dos usuarios tienen un conflicto?
+### Pregunta 1 — ¿Tienen conflictos entre usuarios hoy?
 
-> [Respuesta textual del entrevistado, lo más literal posible]
+> [Respuesta textual — lo más literal posible]
 
 ---
 
-### Pregunta 2 — ¿Cómo resolvieron la última disputa, paso a paso?
+### Pregunta 2 — ¿Cómo resolvieron la última vez que ocurrió algo así?
 
 > [Respuesta textual]
 
 ---
 
-### Pregunta 3 — ¿Cuánto tiempo del equipo se va en esto?
+### Pregunta 3 — ¿Hay alguien dedicado a esto? ¿Cuánto les cuesta?
 
 > [Respuesta textual]
 
 ---
 
-### Pregunta 4 — ¿Qué es lo más frustrante de cómo lo manejan hoy?
+### Pregunta 4 — ¿Qué es lo más frustrante? ¿Perdieron usuarios o reputación por esto?
 
 > [Respuesta textual]
 
 ---
 
-### Pregunta 5 — ¿Considerarían un árbitro externo neutral?
+### Pregunta 5 — Si pudieran diseñar la solución ideal, ¿cómo sería?
 
 > [Respuesta textual]
+
+---
+
+### Pregunta 6 — ¿Cuánto valdría resolver esto? ¿Qué modelo de pago preferirían? *(solo si hubo buena señal)*
+
+> [Respuesta textual — o "No se preguntó / No aplica"]
 
 ---
 
 ## Síntesis
 
 ### ¿Tienen disputas hoy?
-Sí / No / Potencialmente — [frecuencia estimada]
+Sí / No / Potencialmente — [frecuencia estimada si la mencionaron]
 
-### Cómo las resuelven actualmente
-[Descripción del proceso actual con sus palabras]
+### Cómo las resuelven actualmente (workaround real)
+[Descripción exacta del proceso actual — con sus palabras]
 
-### Costo actual
-[Tiempo de equipo / salarios / herramientas / usuarios perdidos — lo que dijeron]
+### ¿Están pagando por resolver esto hoy?
+Sí (empleado / servicio / tiempo de equipo) / No / No mencionado
 
-### Pain point principal
-[La frase o idea más reveladora sobre el problema]
+### Costo actual estimado
+[Tiempo semanal / salario / herramientas / usuarios perdidos — lo que dijeron]
 
-### Reacción a la idea de un árbitro externo
-[Cómo respondieron a la Pregunta 5 — abiertos, escépticos, indiferentes]
+### Dolor funcional
+[El impacto operativo más concreto que mencionaron]
 
-### Quote destacado
+### Dolor emocional y social
+[El impacto humano y reputacional — con quote si es posible]
+
+### Visión ideal según ellos
+[Lo que dijeron en Q5 — qué querrían]
+
+### Willingness to pay
+[Modelo preferido y rango — o "No se llegó a preguntar"]
+
+### Quote más revelador
 > "[Cita literal si la obtuviste]"
 
 ---
@@ -83,4 +108,4 @@ Sí / No / Potencialmente — [frecuencia estimada]
 
 ## Notas adicionales
 
-[Cualquier otra cosa relevante que surgió en la conversación]
+[Cualquier cosa relevante que surgió fuera de las preguntas formales]

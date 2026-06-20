@@ -70,32 +70,6 @@ export interface DisputeData {
 }
 
 /**
- * Dispute (re-exported for convenience)
- */
-export interface Dispute {
-  id: string | bigint;
-  title?: string;
-  category: string;
-  status: number | string;
-  phase?: string;
-  claimer: string;
-  defender: string;
-  stake?: string;
-  jurorsRequired?: number;
-  revealDeadline?: number;
-  evidenceDeadline?: number;
-  claimerPaid?: boolean;
-  defenderPaid?: boolean;
-  evidence?: string[];
-  description?: string;
-  isUrgent?: boolean;
-  deadlineLabel?: string;
-  ruling?: number;
-  claimerName?: string;
-  defenderName?: string;
-}
-
-/**
  * Voting parameters
  */
 export interface VoteParams {
@@ -127,7 +101,7 @@ export interface BlockchainHooks {
     disconnect: () => Promise<void> | void;
     isAuthenticated: boolean;
   };
-
+  
   // Action hooks
   useCreateDispute: () => {
     createDispute: (...args: any[]) => Promise<boolean>;
@@ -172,23 +146,19 @@ export interface BlockchainHooks {
     requestTokens: () => Promise<boolean>;
     isRequesting: boolean;
   };
-  useSubmitEvidence?: () => {
-    submitEvidence: (disputeId: any, metaHash: string) => Promise<boolean>;
-    isSubmitting: boolean;
-  };
-
+  
   // Voting hooks
   useVote: (disputeId?: any) => any;
   useReveal: (disputeId?: any) => any;
   useSliceVoting: () => any;
   useJurorStats: (address?: string) => any;
-
+  
   // Dispute query hooks
   useGetDispute: (disputeId: any) => any;
   useDisputeList: (filter?: string) => any;
   useMyDisputes: () => any;
   useAllDisputes: () => any;
-
+  
   // User hooks
   useUserProfile: (address?: string) => any;
   useStakingToken: () => any;
@@ -208,22 +178,22 @@ export interface BlockchainProviderProps {
  */
 export interface BlockchainPlugin {
   name: string;
-
+  
   /**
    * Initialize the plugin (setup, config loading, etc.)
    */
   initialize: () => Promise<void>;
-
+  
   /**
    * Get the provider component for this blockchain
    */
   getProviderComponent: () => React.ComponentType<BlockchainProviderProps>;
-
+  
   /**
    * All hooks exposed by this plugin
    */
   hooks: BlockchainHooks;
-
+  
   /**
    * Optional: get configuration specific to this blockchain
    */
