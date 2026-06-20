@@ -1,14 +1,14 @@
-# Justly — Visión de Producto B2B
+# Slice — Visión de Producto B2B
 
-> Este documento explica qué es Justly a nivel de negocio y por qué importa. Es el punto de entrada para cualquier persona que quiera entender el producto más allá del código.
+> Este documento explica qué es Slice a nivel de negocio y por qué importa. Es el punto de entrada para cualquier persona que quiera entender el producto más allá del código.
 
 ---
 
-## Qué es Justly
+## Qué es Slice
 
-Justly es una **capa de resolución de disputas** diseñada para integrarse en plataformas digitales que manejan transacciones entre partes que no se conocen.
+Slice es una **capa de resolución de disputas** diseñada para integrarse en plataformas digitales que manejan transacciones entre partes que no se conocen.
 
-No es un producto de consumo. Es **infraestructura B2B**: las plataformas integran Justly para resolver los conflictos de sus propios usuarios sin tener que construir ni operar un sistema de arbitraje propio.
+No es un producto de consumo. Es **infraestructura B2B**: las plataformas integran Slice para resolver los conflictos de sus propios usuarios sin tener que construir ni operar un sistema de arbitraje propio.
 
 ---
 
@@ -34,7 +34,7 @@ A medida que una plataforma crece, ambos enfoques colapsan.
 
 ## Nuestra propuesta de valor (B2B)
 
-Justly se integra como árbitro externo neutral. La plataforma no necesita decidir quién tiene la razón — delega ese proceso a un protocolo de jurados descentralizado que:
+Slice se integra como árbitro externo neutral. La plataforma no necesita decidir quién tiene la razón — delega ese proceso a un protocolo de jurados descentralizado que:
 
 - **Opera automáticamente**: sin intervención del equipo de la plataforma.
 - **Es neutral**: los jurados no tienen relación con la plataforma ni con ninguna de las partes.
@@ -51,18 +51,18 @@ La integración sigue un patrón `arbitrable/arbitrator`:
 1. El contrato de la plataforma llama a `createDispute(...)` cuando detecta un conflicto.
 2. Ambas partes fondean su lado de la disputa.
 3. Las partes suben evidencia (links a IPFS, contratos, capturas).
-4. Justly selecciona jurados aleatoriamente del pool de stakers.
+4. Slice selecciona jurados aleatoriamente del pool de stakers.
 5. Los jurados votan via commit-reveal (sin colusión).
 6. El fallo se ejecuta automáticamente on-chain.
 7. El contrato de la plataforma recibe el resultado vía callback `rule(disputeId, ruling)`.
 
-Para plataformas que no tienen smart contracts propios, Justly también expone una **API REST** para crear y consultar disputas.
+Para plataformas que no tienen smart contracts propios, Slice también expone una **API REST** para crear y consultar disputas.
 
 ---
 
 ## Clientes objetivo
 
-Justly es más valioso para plataformas que tienen **dos o más de estas características**:
+Slice es más valioso para plataformas que tienen **dos o más de estas características**:
 
 | Característica | Por qué importa |
 |---------------|-----------------|
@@ -112,19 +112,19 @@ Justly es más valioso para plataformas que tienen **dos o más de estas caracte
 
 ---
 
-## Lo que Justly no es
+## Lo que Slice no es
 
 - **No es un tribunal legal**: no tiene peso jurídico. Es un mecanismo de coordinación económica.
-- **No es un producto B2C de consumo masivo**: los usuarios finales interactúan con Justly a través de la plataforma que lo integra, no directamente con Justly.
+- **No es un producto B2C de consumo masivo**: los usuarios finales interactúan con Slice a través de la plataforma que lo integra, no directamente con Slice.
 - **No es mediación**: no busca compromiso. El protocolo emite un fallo binario (claimer gana / defender gana) ejecutable automáticamente.
-- **No reemplaza el soporte**: Justly es para disputas formalizadas donde hay valor bloqueado. El soporte casual sigue siendo responsabilidad de la plataforma.
+- **No reemplaza el soporte**: Slice es para disputas formalizadas donde hay valor bloqueado. El soporte casual sigue siendo responsabilidad de la plataforma.
 
 ---
 
 ## Recursos
 
-- [Documentación pública de Justly](https://docs.justly.one)
-- [Cómo integrar Justly en smart contracts](https://docs.justly.one/protocol/implementing-justly-web3-smart-contracts)
+- [Documentación pública de Slice](https://docs.justly.one)
+- [Cómo integrar Slice en smart contracts](https://docs.justly.one/protocol/implementing-justly-web3-smart-contracts)
 - [Ciclo de vida de una disputa](https://docs.justly.one/how-it-works/dispute-lifecycle)
 - [Tiers de disputa](https://docs.justly.one/how-it-works/tiers/dispute-tiers)
 - [Customer Discovery — guía de entrevistas](../research/customer-discovery.md)

@@ -25,7 +25,7 @@
 
 ---
 
-## Por qué es candidato para Justly
+## Por qué es candidato para Slice
 
 [Qué criterios cumple — por qué tiene riesgo de disputas entre usuarios]
 
@@ -100,7 +100,7 @@ Sí (empleado / servicio / tiempo de equipo) / No / No mencionado
 
 ---
 
-## ¿Es un candidato para Justly?
+## ¿Es un candidato para Slice?
 
 **Alta / Media / Baja** — [justificación en una oración]
 

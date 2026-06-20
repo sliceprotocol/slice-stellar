@@ -1,6 +1,6 @@
 # Customer Discovery — Guía de Entrevistas B2B
 
-> Este documento es la guía de referencia para el programa de customer discovery de Justly en el ecosistema Stellar.  
+> Este documento es la guía de referencia para el programa de customer discovery de Slice en el ecosistema Stellar.  
 > Objetivo: validar si la resolución de disputas descentralizada es un problema suficientemente grande y urgente para los proyectos del ecosistema.
 
 ---
@@ -55,7 +55,7 @@ Priorizar proyectos que cumplan **dos o más** de estos criterios:
 1. **Busca al founder o product lead** en X (Twitter), Discord del proyecto, o LinkedIn.
 2. **Mensaje de apertura sugerido** (adaptalo según el canal):
 
-> "Hola [nombre], soy [tu nombre], contribuidor de Justly — un protocolo de resolución de disputas descentralizado para el ecosistema Stellar.  
+> "Hola [nombre], soy [tu nombre], contribuidor de Slice — un protocolo de resolución de disputas descentralizado para el ecosistema Stellar.  
 > Estamos en etapa de discovery y me encantaría hacerte algunas preguntas sobre cómo manejan los conflictos entre usuarios en [nombre del proyecto]. No te voy a vender nada todavía — estamos tratando de entender el problema antes de construir más.  
 > ¿Tendrías 20-30 minutos esta semana?"
 
@@ -123,11 +123,11 @@ Objetivo: entender qué quieren (sin sesgarlos con nuestra solución todavía).
 
 ---
 
-### Bloque 5 — Pitch de Justly (5-10 min)
+### Bloque 5 — Pitch de Slice (5-10 min)
 
-Objetivo: medir reacción genuina. Recién acá explicas qué es Justly.
+Objetivo: medir reacción genuina. Recién acá explicas qué es Slice.
 
-> **Script sugerido**: "Te cuento qué estamos construyendo. Justly es un protocolo de arbitraje descentralizado que se integra a tu plataforma vía API o smart contract. Cuando dos usuarios tienen un conflicto, Justly selecciona aleatoriamente un panel de jurados — personas independientes que tienen tokens en juego — que revisan la evidencia y votan. El fallo se ejecuta automáticamente on-chain. Vos como plataforma no intervenís en la decisión."
+> **Script sugerido**: "Te cuento qué estamos construyendo. Slice es un protocolo de arbitraje descentralizado que se integra a tu plataforma vía API o smart contract. Cuando dos usuarios tienen un conflicto, Slice selecciona aleatoriamente un panel de jurados — personas independientes que tienen tokens en juego — que revisan la evidencia y votan. El fallo se ejecuta automáticamente on-chain. Vos como plataforma no intervenís en la decisión."
 
 Preguntas de seguimiento:
 - ¿Qué te genera esto? ¿Confianza, escepticismo, curiosidad?
@@ -152,7 +152,7 @@ Objetivo: entender si pagarían y cuánto.
 
 Objetivo: mapear el proceso de adopción real.
 
-- ¿Quién en su equipo tomaría la decisión de integrar algo como Justly? ¿Es una decisión técnica, de producto, o estratégica?
+- ¿Quién en su equipo tomaría la decisión de integrar algo como Slice? ¿Es una decisión técnica, de producto, o estratégica?
 - ¿Qué necesitarían ver para convencerse de integrar un protocolo externo para algo tan sensible como resolver disputas?
 - ¿Ya usan algún servicio externo para soporte o arbitraje?
 
@@ -162,7 +162,7 @@ Objetivo: mapear el proceso de adopción real.
 
 - ¿Hay algo más que quieras agregar que no te pregunté?
 - ¿Conocés otros proyectos en el ecosistema que tengan este problema y podría ser útil entrevistar?
-- ¿Puedo mandarte actualizaciones sobre Justly a medida que avanzamos?
+- ¿Puedo mandarte actualizaciones sobre Slice a medida que avanzamos?
 
 ---
 
@@ -198,7 +198,7 @@ Crear un archivo en `docs/research/interviews/NombreProyecto.md` para cada entre
 ## Costo estimado del problema
 [Tiempo, dinero, usuarios perdidos — lo que dijeron]
 
-## Reacción al pitch de Justly
+## Reacción al pitch de Slice
 [Cómo reaccionaron, qué preguntas hicieron, qué les preocupó]
 
 ## Disposición a integrar
@@ -226,7 +226,7 @@ Al terminar las 10+ entrevistas, crear `docs/research/customer-discovery-summary
 1. **Tabla de señales por proyecto** (fit / dolor / willingness to pay / blocker principal)
 2. **Los 3-5 pain points más frecuentes**
 3. **El modelo de pricing preferido** (por disputa / suscripción / porcentaje)
-4. **Los 3-5 blockers más frecuentes** para adoptar Justly
+4. **Los 3-5 blockers más frecuentes** para adoptar Slice
 5. **Proyectos que querrían avanzar** (leads calientes)
 6. **Conclusión**: ¿El problema es suficientemente grande y urgente para construir un startup en esto?
 
@@ -235,8 +235,8 @@ Al terminar las 10+ entrevistas, crear `docs/research/customer-discovery-summary
 ## Recursos
 
 - [Visión B2B del producto](../product/b2b-overview.md)
-- [Documentación de Justly](https://docs.justly.one)
+- [Documentación de Slice](https://docs.justly.one)
 - [Demo — experiencia del jurado](https://docs.justly.one/overview/live-demo-juror-experience)
-- [Cómo integrar Justly en smart contracts](https://docs.justly.one/protocol/implementing-justly-web3-smart-contracts)
+- [Cómo integrar Slice en smart contracts](https://docs.justly.one/protocol/implementing-justly-web3-smart-contracts)
 - [Proyectos financiados por SCF](https://communityfund.stellar.org/projects)
 - [Rondas activas SCF](https://communityfund.stellar.org/dashboard/award-rounds)
