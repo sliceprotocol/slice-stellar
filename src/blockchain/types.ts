@@ -70,6 +70,38 @@ export interface DisputeData {
 }
 
 /**
+ * Full dispute representation used by the frontend
+ */
+export interface Dispute {
+  id: string | bigint;
+  title: string;
+  category: string;
+  status: number | string;
+  phase?: string;
+  deadlineLabel?: string;
+  isUrgent?: boolean;
+  stake?: string;
+  description?: string;
+  claimer: string;
+  defender: string;
+  claimerName?: string;
+  defenderName?: string;
+  claimerDescription?: string;
+  defenderDescription?: string;
+  claimerCarouselEvidence?: string[];
+  defenderCarouselEvidence?: string[];
+  claimerAudioEvidence?: string;
+  defenderAudioEvidence?: string;
+  evidence?: string[];
+  jurorsRequired?: number;
+  revealDeadline?: number;
+  evidenceDeadline?: number;
+  claimerPaid?: boolean;
+  defenderPaid?: boolean;
+  ruling?: number;
+}
+
+/**
  * Voting parameters
  */
 export interface VoteParams {
@@ -145,6 +177,10 @@ export interface BlockchainHooks {
   useFaucet?: () => {
     requestTokens: () => Promise<boolean>;
     isRequesting: boolean;
+  };
+  useSubmitEvidence?: () => {
+    submitEvidence: (disputeId: any, metaHash: string) => Promise<boolean>;
+    isSubmitting: boolean;
   };
   
   // Voting hooks
