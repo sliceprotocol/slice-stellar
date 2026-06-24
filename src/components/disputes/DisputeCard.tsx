@@ -67,7 +67,7 @@ export const DisputeCard = ({ dispute }: { dispute: DisputeUI }) => {
   const isReadyForWithdrawal =
     dispute.status === DISPUTE_STATUS.REVEAL && dispute.phase === "WITHDRAW";
 
-  const myVote = dispute.voters?.find((v) => v.isMe)?.vote;
+  const myVote = dispute.voters?.find((v: { isMe: boolean; vote: number }) => v.isMe)?.vote;
 
   return (
     <div
