@@ -109,3 +109,12 @@ Reyts connects two strangers exchanging money across borders. Funds move only wh
 ## Notas adicionales
 
 🔄 In progress — placeholder created for product claim
+
+**Canales de contacto identificados:**
+- Email: developer@reyts.com
+- Telegram comunidad: t.me/+ht1ba-mctmfjntqx
+- Founders: Ayobami Macaulay (COO), Abimbola Adegbite (CSO)
+- App activa en Google Play con usuarios reales
+
+**Mensaje de apertura sugerido (inglés):**
+> Hey Ayobami, I'm collaborating with Slice, a protocol in the Stellar ecosystem. I'm researching how P2P exchange platforms handle conflicts when a swap goes wrong — I noticed Reyts replaces informal WhatsApp trades with structured settlement, and I'd love to learn how your team handles edge cases. Would you be up for a quick 10-minute chat over text? Happy to share more about what we're building in the ecosystem.

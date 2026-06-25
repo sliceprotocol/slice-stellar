@@ -109,3 +109,12 @@ Skyhitz has creators and buyers/listeners exchanging value around subjective del
 ## Notas adicionales
 
 🔄 In progress — placeholder created for product claim
+
+**Canales de contacto identificados:**
+- Discord: discord.gg/2c3hzspeuz
+- X: @skyhitz
+- LinkedIn: linkedin.com/company/skyhitz
+- GitHub: github.com/skyhitz
+
+**Mensaje de apertura sugerido (inglés/español):**
+> Hey, I'm collaborating with Slice, a dispute resolution protocol on Stellar. I'm researching how creator platforms handle conflicts around royalties, rights, or payments between artists and listeners. Skyhitz caught my attention because of the on-chain monetization model. Would you be open to a quick 10-minute text exchange? I can share more about what we're building if you're interested.

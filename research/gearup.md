@@ -109,3 +109,12 @@ GearUp has two parties exchanging value (buyers/renters and sellers/owners) who 
 ## Notas adicionales
 
 🔄 In progress — placeholder created for product claim
+
+**Canales de contacto identificados:**
+- Email: support@gearup.market
+- X: @Gearupmarket
+- LinkedIn: Mary Odogbo (Co-founder & CEO), Obasi Ifegwu (Co-founder)
+- Tel: +234 912 166 8550
+
+**Mensaje de apertura sugerido (inglés):**
+> Hey Mary, I'm collaborating with Slice, a dispute resolution protocol in the Stellar ecosystem. I'm not here to sell anything — I'm researching how P2P marketplaces handle conflicts between users, and GearUp's model of renting/selling gear between creators seemed like a really interesting case. Would you be up for answering a few questions over text? It won't take more than 10 minutes, and if you're interested, I can share more about what we're building.

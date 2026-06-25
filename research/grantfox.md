@@ -109,3 +109,13 @@ GrantFox has two parties (project sponsors and contributors) exchanging value ba
 ## Notas adicionales
 
 🔄 In progress — placeholder created for product claim
+
+**Canales de contacto identificados:**
+- Email: pablo@grantfox.xyz
+- Discord: discord.gg/grdrwv4777
+- X: @itsgrantfox
+- Founders: Joel Vargas, Pablo Mora Serrano, Marco Araya Jiménez
+- dApp activa: dapp.grantfox.xyz
+
+**Mensaje de apertura sugerido (español/inglés):**
+> Hola Pablo, estoy colaborando con Slice, un protocolo de resolución de disputas en el ecosistema Stellar. No vengo a vender nada — estoy investigando cómo las plataformas de bounties/milestones manejan conflictos cuando un entregable no cumple expectativas. GrantFox con Trustless Work me pareció un caso muy relevante. ¿Te animarías a responder unas preguntas por texto? No toma más de 10 minutos.

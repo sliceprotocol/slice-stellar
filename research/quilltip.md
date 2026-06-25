@@ -109,3 +109,11 @@ QuillTip has creators and readers exchanging value (tips, paid content, NFT owne
 ## Notas adicionales
 
 🔄 In progress — placeholder created for product claim
+
+**Canales de contacto identificados:**
+- GitHub: github.com/pragya-shar/quilltip
+- Website: quilltip.me
+- SCF Round 39 ($37,200 awarded)
+
+**Mensaje de apertura sugerido (inglés):**
+> Hey, I'm collaborating with Slice, a dispute resolution protocol in the Stellar ecosystem. I'm researching how publishing/tipping platforms handle conflicts between creators and readers — things like content disputes or refund requests. QuillTip seemed like a relevant case. Would you be up for answering a few questions over text? It won't take more than 10 minutes.
