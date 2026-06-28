@@ -75,13 +75,13 @@ export interface DisputeData {
 export interface Dispute {
   id: string | bigint;
   title: string;
+  description?: string;
   category: string;
   status: number | string;
   phase?: string;
   deadlineLabel?: string;
   isUrgent?: boolean;
   stake?: string;
-  description?: string;
   claimer: string;
   defender: string;
   claimerName?: string;
@@ -94,6 +94,7 @@ export interface Dispute {
   defenderAudioEvidence?: string;
   evidence?: string[];
   jurorsRequired?: number;
+  votesCount?: number;
   revealDeadline?: number;
   evidenceDeadline?: number;
   claimerPaid?: boolean;
